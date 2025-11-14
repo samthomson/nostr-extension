@@ -244,32 +244,38 @@ class StreamUI {
     
     // Determine what to show in preview
     let previewContent = "";
+    let fullPreviewContent = "";
     let previewClass = this.expandEvents ? "preview-expanded" : "preview-compact";
     
     if (type === "EVENT") {
       // Show the event object, not the whole frame
       const evt = frame[1]?.kind !== undefined ? frame[1] : frame[2];
+      fullPreviewContent = JSON.stringify(evt, null, 2);
       if (this.expandEvents) {
-        previewContent = JSON.stringify(evt, null, 2);
+        previewContent = fullPreviewContent;
       } else {
         previewContent = JSON.stringify(evt).substring(0, 100);
         if (JSON.stringify(evt).length > 100) previewContent += "...";
       }
     } else {
       // For non-EVENT messages, show the frame
+      fullPreviewContent = JSON.stringify(frame, null, 2);
       if (this.expandEvents) {
-        previewContent = JSON.stringify(frame, null, 2);
+        previewContent = fullPreviewContent;
       } else {
         previewContent = JSON.stringify(frame).substring(0, 100);
         if (JSON.stringify(frame).length > 100) previewContent += "...";
       }
     }
     
+    // Copy icon SVG
+    const copyIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>`;
+    
     // Pubkey cell with copy functionality
     const pubkeyHtml = fullPubkey 
       ? `<div class="pubkey-wrapper">
            <span>${escapeHtml(pubkey)}</span>
-           <span class="copy-icon" data-pubkey="${escapeHtml(fullPubkey)}" title="Copy full pubkey">📋</span>
+           <span class="copy-icon" data-copy="${escapeHtml(fullPubkey)}" title="Copy full pubkey">${copyIconSvg}</span>
          </div>`
       : "";
     
@@ -278,25 +284,36 @@ class StreamUI {
       <td class="type">${escapeHtml(type)}</td>
       <td class="kind" title="${kindTooltip}">${escapeHtml(String(kind))}</td>
       <td class="pubkey">${pubkeyHtml}</td>
-      <td class="preview ${previewClass}">${escapeHtml(previewContent)}</td>
+      <td class="preview ${previewClass}">
+        <div class="preview-wrapper">
+          <span class="preview-content">${escapeHtml(previewContent)}</span>
+          <span class="copy-icon" data-copy="${escapeHtml(fullPreviewContent)}" title="Copy full event">${copyIconSvg}</span>
+        </div>
+      </td>
     `;
     
-    // Add click handler for copy icon
-    const copyIcon = tr.querySelector('.copy-icon');
-    if (copyIcon) {
+    // Add click handlers for all copy icons
+    const copyIcons = tr.querySelectorAll('.copy-icon');
+    copyIcons.forEach(copyIcon => {
       copyIcon.addEventListener('click', (e) => {
         e.stopPropagation();
-        const pubkeyToCopy = (copyIcon as HTMLElement).dataset.pubkey!;
-        navigator.clipboard.writeText(pubkeyToCopy).then(() => {
-          // Show "Copied!" feedback
+        const textToCopy = (copyIcon as HTMLElement).dataset.copy!;
+        navigator.clipboard.writeText(textToCopy).then(() => {
+          // Show "Copied!" feedback at cursor position
           const feedback = document.createElement('div');
           feedback.className = 'copy-feedback';
           feedback.textContent = 'Copied!';
-          (copyIcon.parentElement as HTMLElement).appendChild(feedback);
-          setTimeout(() => feedback.remove(), 1500);
+          
+          // Position near the click
+          const rect = (e.target as HTMLElement).getBoundingClientRect();
+          feedback.style.left = rect.left + 'px';
+          feedback.style.top = (rect.top - 25) + 'px';
+          
+          document.body.appendChild(feedback);
+          setTimeout(() => feedback.remove(), 1000);
         });
       });
-    }
+    });
     
     this.rowsEl.insertBefore(tr, this.rowsEl.firstChild);
     
