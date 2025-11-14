@@ -5,7 +5,7 @@
   "scripts": {
     "build": "tsc && cp src/devtools.html . && cp src/panel.html .",
     "watch": "tsc --watch",
-    "clean": "rm -f *.js types.js devtools.html panel.html"
+    "clean": "rm -f *.js devtools.html panel.html"
   },
   "devDependencies": {
     "@types/chrome": "^0.0.268",
