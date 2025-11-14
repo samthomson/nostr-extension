@@ -10,11 +10,23 @@ interface NostrMessage {
 class NostrStore {
   private events: NostrMessage[] = [];
   private listeners: Array<() => void> = [];
+  private paused: boolean = false;
   
   // Add a new event
   addEvent(msg: NostrMessage): void {
-    this.events.push(msg);
-    this.notify();
+    if (!this.paused) {
+      this.events.push(msg);
+      this.notify();
+    }
+  }
+  
+  // Pause/resume capturing
+  setPaused(paused: boolean): void {
+    this.paused = paused;
+  }
+  
+  isPaused(): boolean {
+    return this.paused;
   }
   
   // Get all events

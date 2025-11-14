@@ -103,8 +103,38 @@ function escapeHtml(str) {
 class StreamUI {
     constructor() {
         this.rowsEl = document.getElementById("rows");
+        this.pauseBtn = document.getElementById("pauseBtn");
+        this.clearBtn = document.getElementById("clearBtn");
+        this.setupControls();
+    }
+    setupControls() {
+        // Pause button
+        this.pauseBtn.addEventListener("click", () => {
+            const isPaused = store.isPaused();
+            store.setPaused(!isPaused);
+            this.updatePauseButton();
+        });
+        // Clear button
+        this.clearBtn.addEventListener("click", () => {
+            this.clear();
+            store.clear();
+        });
+    }
+    updatePauseButton() {
+        const isPaused = store.isPaused();
+        if (isPaused) {
+            this.pauseBtn.textContent = "Resume";
+            this.pauseBtn.classList.add("paused");
+        }
+        else {
+            this.pauseBtn.textContent = "Pause";
+            this.pauseBtn.classList.remove("paused");
+        }
     }
     addRow(msg) {
+        // Don't add rows if paused
+        if (store.isPaused())
+            return;
         const { dir, frame } = msg;
         const type = frame[0];
         let kind = "";

@@ -58,6 +58,38 @@
     color: #999;
     font-size: 14px;
   }
+  
+  .stream-controls {
+    display: flex;
+    gap: 8px;
+    padding: 8px 12px;
+    background: #f9f9f9;
+    border-bottom: 1px solid #ddd;
+  }
+  
+  .btn {
+    padding: 4px 12px;
+    border: 1px solid #ccc;
+    background: white;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 500;
+  }
+  
+  .btn:hover {
+    background: #f0f0f0;
+  }
+  
+  .btn.paused {
+    background: #ff9800;
+    color: white;
+    border-color: #f57c00;
+  }
+  
+  .btn.paused:hover {
+    background: #f57c00;
+  }
   table { 
     width: 100%; 
     border-collapse: collapse; 
@@ -128,6 +160,26 @@
     .placeholder {
       color: #666;
     }
+    .stream-controls {
+      background: #252526;
+      border-bottom: 1px solid #3e3e42;
+    }
+    .btn {
+      background: #2d2d30;
+      border-color: #3e3e42;
+      color: #ccc;
+    }
+    .btn:hover {
+      background: #3e3e42;
+    }
+    .btn.paused {
+      background: #ff9800;
+      color: white;
+      border-color: #f57c00;
+    }
+    .btn.paused:hover {
+      background: #f57c00;
+    }
     header {
       background: #252526;
       border-bottom: 1px solid #3e3e42;
@@ -176,6 +228,10 @@
 </div>
 
 <div class="tab-content active" id="stream">
+  <div class="stream-controls">
+    <button class="btn" id="pauseBtn">Pause</button>
+    <button class="btn" id="clearBtn">Clear</button>
+  </div>
   <table>
     <thead>
       <tr>

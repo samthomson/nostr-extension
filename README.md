@@ -24,6 +24,8 @@ The panel HTML is cached and won't update otherwise.
 
 ## todo
 
+- event count summaries (total events, ws events, nostr events, subs, per kind count)
+- kind number only, literal just on hover
 - better formating of events
 - filter on kinds
 - implement summary tab (aggregate stats, unique kinds, etc.)

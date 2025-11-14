@@ -4,11 +4,21 @@ class NostrStore {
     constructor() {
         this.events = [];
         this.listeners = [];
+        this.paused = false;
     }
     // Add a new event
     addEvent(msg) {
-        this.events.push(msg);
-        this.notify();
+        if (!this.paused) {
+            this.events.push(msg);
+            this.notify();
+        }
+    }
+    // Pause/resume capturing
+    setPaused(paused) {
+        this.paused = paused;
+    }
+    isPaused() {
+        return this.paused;
     }
     // Get all events
     getAllEvents() {

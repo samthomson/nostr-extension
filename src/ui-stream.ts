@@ -114,12 +114,46 @@ function escapeHtml(str: string): string {
 
 class StreamUI {
   private rowsEl: HTMLElement;
+  private pauseBtn: HTMLButtonElement;
+  private clearBtn: HTMLButtonElement;
   
   constructor() {
     this.rowsEl = document.getElementById("rows")!;
+    this.pauseBtn = document.getElementById("pauseBtn") as HTMLButtonElement;
+    this.clearBtn = document.getElementById("clearBtn") as HTMLButtonElement;
+    
+    this.setupControls();
+  }
+  
+  private setupControls(): void {
+    // Pause button
+    this.pauseBtn.addEventListener("click", () => {
+      const isPaused = store.isPaused();
+      store.setPaused(!isPaused);
+      this.updatePauseButton();
+    });
+    
+    // Clear button
+    this.clearBtn.addEventListener("click", () => {
+      this.clear();
+      store.clear();
+    });
+  }
+  
+  private updatePauseButton(): void {
+    const isPaused = store.isPaused();
+    if (isPaused) {
+      this.pauseBtn.textContent = "Resume";
+      this.pauseBtn.classList.add("paused");
+    } else {
+      this.pauseBtn.textContent = "Pause";
+      this.pauseBtn.classList.remove("paused");
+    }
   }
   
   addRow(msg: any): void {
+    // Don't add rows if paused
+    if (store.isPaused()) return;
     const { dir, frame } = msg;
     const type = frame[0];
     let kind: number | string = "";
