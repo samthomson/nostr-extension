@@ -180,11 +180,11 @@ class StreamUI {
         const tr = document.createElement("tr");
         const preview = JSON.stringify(frame).substring(0, 100);
         const kindName = getKindName(kind);
-        const kindDisplay = kind ? `${kind}${kindName ? ` (${kindName})` : ""}` : "";
+        const kindTooltip = kind && kindName ? `${kind} - ${kindName}` : (kind ? String(kind) : "");
         tr.innerHTML = `
       <td class="dir dir-${dir}">${dir === "in" ? "←" : "→"}</td>
       <td class="type">${escapeHtml(type)}</td>
-      <td class="kind" title="${kindName}">${escapeHtml(kindDisplay)}</td>
+      <td class="kind" title="${kindTooltip}">${escapeHtml(String(kind))}</td>
       <td class="pubkey">${escapeHtml(pubkey)}</td>
       <td class="preview">${escapeHtml(preview)}${preview.length >= 100 ? "..." : ""}</td>
     `;
