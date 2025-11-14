@@ -1,8 +1,17 @@
-import type { BackgroundMessage, NostrEvent, NostrFilter, KindNames, PanelMessage } from "./types";
+// Types defined inline to avoid import/export issues
+interface NostrEvent {
+  kind?: number;
+  pubkey?: string;
+  content?: string;
+}
+interface NostrFilter {
+  kinds?: number[];
+}
+interface KindNames {
+  [kind: number]: string;
+}
 
 const counts = new Map<string, number>();
-const statusEl = document.getElementById("status")!;
-const countsEl = document.getElementById("counts")!;
 const rowsEl = document.getElementById("rows")!;
 
 // Get the tab ID from chrome.devtools API
@@ -12,38 +21,18 @@ const tabId = chrome.devtools.inspectedWindow.tabId;
 const port = chrome.runtime.connect({ name: `devtools-${tabId}` });
 
 // Handle messages from background
-port.onMessage.addListener((msg: BackgroundMessage) => {
-  if (msg.type === "status") {
-    if (msg.ok) {
-      statusEl.textContent = "✓ Listening";
-      statusEl.className = "attached";
-    } else {
-      statusEl.textContent = "✗ Error: " + (msg.error || "Unknown");
-      statusEl.className = "error";
-    }
-  }
-  
+port.onMessage.addListener((msg: any) => {
   if (msg.type === "nostr") {
     addRow(msg);
     updateCounts(msg.frame[0]);
   }
 });
 
-port.onDisconnect.addListener(() => {
-  statusEl.textContent = "Disconnected";
-  statusEl.className = "error";
-});
-
 // Auto-attach on load
-port.postMessage({ type: "attach" } as PanelMessage);
+port.postMessage({ type: "attach" });
 
 function updateCounts(type: string): void {
   counts.set(type, (counts.get(type) || 0) + 1);
-  const parts: string[] = [];
-  for (const [k, v] of counts.entries()) {
-    parts.push(`${k}: ${v}`);
-  }
-  countsEl.textContent = parts.join("  •  ");
 }
 
 // Common Nostr event kind descriptions (NIP-01, NIP-25, NIP-28, NIP-57, etc.)
@@ -142,7 +131,7 @@ function getKindName(kind: number | string): string {
   return KIND_NAMES[kindNum] || "";
 }
 
-function addRow(msg: BackgroundMessage & { type: "nostr" }): void {
+function addRow(msg: any): void {
   const { dir, frame } = msg;
   const type = frame[0];
   let kind: number | string = "";
@@ -190,9 +179,4 @@ function escapeHtml(str: string): string {
   return div.innerHTML;
 }
 
-document.getElementById("clear")!.addEventListener("click", () => {
-  rowsEl.innerHTML = "";
-  counts.clear();
-  countsEl.textContent = "";
-});
 

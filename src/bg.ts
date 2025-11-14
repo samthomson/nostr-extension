@@ -1,4 +1,9 @@
-import type { NostrMessageType, TabState, NostrFrame, PanelMessage, BackgroundMessage } from "./types";
+// Types are defined inline to avoid import/export issues in Chrome extensions
+type NostrMessageType = "REQ" | "EVENT" | "EOSE" | "NOTICE" | "CLOSE" | "AUTH" | "COUNT" | "OK";
+interface TabState {
+  attached: boolean;
+  port: chrome.runtime.Port | null;
+}
 
 // Nostr message types we care about
 const NOSTR_TYPES = new Set<NostrMessageType>(["REQ", "EVENT", "EOSE", "NOTICE", "CLOSE", "AUTH", "COUNT", "OK"]);
@@ -17,19 +22,19 @@ chrome.runtime.onConnect.addListener((port: chrome.runtime.Port) => {
   tabs.set(tabId, state);
   
   // Handle attach requests
-  port.onMessage.addListener(async (msg: PanelMessage) => {
+  port.onMessage.addListener(async (msg: any) => {
     if (msg.type === "attach" && !state.attached) {
       try {
         await chrome.debugger.attach({ tabId }, "1.3");
         await chrome.debugger.sendCommand({ tabId }, "Network.enable");
         state.attached = true;
-        port.postMessage({ type: "status", ok: true } as BackgroundMessage);
+        port.postMessage({ type: "status", ok: true });
       } catch (err) {
         port.postMessage({ 
           type: "status", 
           ok: false, 
           error: String(err) 
-        } as BackgroundMessage);
+        });
       }
     }
   });
@@ -78,9 +83,9 @@ chrome.debugger.onEvent.addListener((
   state.port.postMessage({
     type: "nostr",
     dir: direction,
-    frame: frame as NostrFrame,
+    frame: frame,
     timestamp: params.timestamp
-  } as BackgroundMessage);
+  });
 });
 
 // Handle debugger detach events
@@ -96,7 +101,7 @@ chrome.debugger.onDetach.addListener((
         type: "status", 
         ok: false, 
         error: `Debugger detached: ${reason}` 
-      } as BackgroundMessage);
+      });
     }
   }
 });
