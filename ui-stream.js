@@ -100,9 +100,19 @@ function escapeHtml(str) {
     div.textContent = str;
     return div.innerHTML;
 }
+function showCopyFeedback(iconEl) {
+    const feedback = document.createElement('div');
+    feedback.className = 'copy-feedback';
+    feedback.textContent = 'Copied!';
+    const rect = iconEl.getBoundingClientRect();
+    feedback.style.left = rect.left + 'px';
+    feedback.style.top = (rect.top - 25) + 'px';
+    document.body.appendChild(feedback);
+    setTimeout(() => feedback.remove(), 1000);
+}
 class StreamUI {
     constructor() {
-        this.expandEvents = true;
+        this.expandEvents = false;
         this.rowsEl = document.getElementById("rows");
         this.pauseBtn = document.getElementById("pauseBtn");
         this.clearBtn = document.getElementById("clearBtn");
@@ -238,7 +248,7 @@ class StreamUI {
         const pubkeyHtml = fullPubkey
             ? `<div class="pubkey-wrapper">
            <span>${escapeHtml(pubkey)}</span>
-           <span class="copy-icon" data-copy="${escapeHtml(fullPubkey)}" title="Copy full pubkey">${copyIconSvg}</span>
+           <span class="copy-icon copy-pubkey" title="Copy full pubkey">${copyIconSvg}</span>
          </div>`
             : "";
         tr.innerHTML = `
@@ -249,29 +259,73 @@ class StreamUI {
       <td class="preview ${previewClass}">
         <div class="preview-wrapper">
           <span class="preview-content">${escapeHtml(previewContent)}</span>
-          <span class="copy-icon" data-copy="${escapeHtml(fullPreviewContent)}" title="Copy full event">${copyIconSvg}</span>
+          <span class="copy-icon copy-event" title="Copy full event">${copyIconSvg}</span>
         </div>
       </td>
     `;
-        // Add click handlers for all copy icons
-        const copyIcons = tr.querySelectorAll('.copy-icon');
-        copyIcons.forEach(copyIcon => {
-            copyIcon.addEventListener('click', (e) => {
+        // Store data on the row element to avoid escaping issues
+        tr.__copyData = {
+            pubkey: fullPubkey,
+            event: fullPreviewContent
+        };
+        // Add click handlers using event delegation on the row
+        tr.addEventListener('click', (e) => {
+            const target = e.target;
+            const debugEl = document.getElementById('debugMsg');
+            if (debugEl)
+                debugEl.textContent = `Clicked: ${target.tagName}.${target.className}`;
+            // Check if we clicked on a copy icon or its child
+            const copyIcon = target.closest('.copy-icon');
+            if (copyIcon) {
+                e.preventDefault();
                 e.stopPropagation();
-                const textToCopy = copyIcon.dataset.copy;
-                navigator.clipboard.writeText(textToCopy).then(() => {
-                    // Show "Copied!" feedback at cursor position
-                    const feedback = document.createElement('div');
-                    feedback.className = 'copy-feedback';
-                    feedback.textContent = 'Copied!';
-                    // Position near the click
-                    const rect = e.target.getBoundingClientRect();
-                    feedback.style.left = rect.left + 'px';
-                    feedback.style.top = (rect.top - 25) + 'px';
-                    document.body.appendChild(feedback);
-                    setTimeout(() => feedback.remove(), 1000);
-                });
-            });
+                if (debugEl)
+                    debugEl.textContent = 'Copy icon found!';
+                let textToCopy = '';
+                if (copyIcon.classList.contains('copy-pubkey')) {
+                    textToCopy = tr.__copyData.pubkey;
+                    if (debugEl)
+                        debugEl.textContent = 'Copying pubkey...';
+                }
+                else if (copyIcon.classList.contains('copy-event')) {
+                    textToCopy = tr.__copyData.event;
+                    if (debugEl)
+                        debugEl.textContent = 'Copying event...';
+                }
+                if (!textToCopy) {
+                    if (debugEl)
+                        debugEl.textContent = 'ERROR: No text to copy';
+                    return;
+                }
+                // Use old-school execCommand since Clipboard API is blocked in DevTools
+                try {
+                    const textarea = document.createElement('textarea');
+                    textarea.value = textToCopy;
+                    textarea.style.position = 'fixed';
+                    textarea.style.opacity = '0';
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    const success = document.execCommand('copy');
+                    document.body.removeChild(textarea);
+                    if (success) {
+                        if (debugEl)
+                            debugEl.textContent = 'Copied!';
+                        showCopyFeedback(copyIcon);
+                        setTimeout(() => {
+                            if (debugEl)
+                                debugEl.textContent = '';
+                        }, 2000);
+                    }
+                    else {
+                        if (debugEl)
+                            debugEl.textContent = 'ERROR: Copy failed';
+                    }
+                }
+                catch (err) {
+                    if (debugEl)
+                        debugEl.textContent = 'ERROR: ' + err.message;
+                }
+            }
         });
         this.rowsEl.insertBefore(tr, this.rowsEl.firstChild);
         // Limit to 500 rows

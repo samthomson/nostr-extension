@@ -168,7 +168,7 @@
   .type { width: 80px; font-family: 'Courier New', monospace; }
   .kind { 
     width: 60px;
-    text-align: center;
+    text-align: left;
     font-size: 11px;
   }
   .pubkey { 
@@ -195,12 +195,17 @@
     height: 12px;
     margin-left: 4px;
     vertical-align: middle;
+    flex-shrink: 0;
   }
   
   .copy-icon svg {
     width: 12px;
     height: 12px;
     fill: #666;
+  }
+  
+  .copy-icon * {
+    pointer-events: none;
   }
   
   .pubkey:hover .copy-icon,
@@ -387,9 +392,10 @@
     <button class="btn" id="pauseBtn">Pause</button>
     <button class="btn" id="clearBtn">Clear</button>
     <div class="checkbox-wrapper">
-      <input type="checkbox" id="expandEventsCheckbox" checked>
+      <input type="checkbox" id="expandEventsCheckbox">
       <label for="expandEventsCheckbox">Expand Events</label>
     </div>
+    <div id="debugMsg" style="margin-left: auto; font-size: 10px; color: #999;"></div>
   </div>
   <div class="stream-stats" id="streamStats">
     <div class="stat">
