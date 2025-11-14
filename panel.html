@@ -1,0 +1,153 @@
+<!doctype html>
+<meta charset="utf-8">
+<style>
+  /* Light mode (default) */
+  body { 
+    font: 12px system-ui, sans-serif; 
+    margin: 0; 
+    padding: 0;
+    background: white;
+    color: #333;
+  }
+  header { 
+    padding: 8px 12px; 
+    border-bottom: 1px solid #ddd; 
+    display: flex; 
+    gap: 12px; 
+    align-items: center;
+    background: #f5f5f5;
+  }
+  #status { 
+    font-weight: 500;
+    color: #666;
+  }
+  #status.attached { color: #0a0; }
+  #status.error { color: #c00; }
+  #counts { 
+    margin-left: auto;
+    font-size: 11px;
+    color: #666;
+    font-weight: 500;
+  }
+  button {
+    padding: 4px 12px;
+    border: 1px solid #ccc;
+    background: white;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 11px;
+  }
+  button:hover { background: #f0f0f0; }
+  table { 
+    width: 100%; 
+    border-collapse: collapse; 
+    font-size: 12px;
+  }
+  thead {
+    background: #f9f9f9;
+    position: sticky;
+    top: 0;
+  }
+  th, td { 
+    border-bottom: 1px solid #eee; 
+    padding: 6px 8px; 
+    text-align: left;
+  }
+  th {
+    font-weight: 600;
+    font-size: 11px;
+    text-transform: uppercase;
+    color: #666;
+  }
+  .dir { 
+    width: 50px; 
+    font-weight: 600;
+    font-family: 'Courier New', monospace;
+  }
+  .type { width: 80px; font-family: 'Courier New', monospace; }
+  .kind { 
+    min-width: 150px;
+    text-align: left;
+    font-size: 11px;
+  }
+  .pubkey { 
+    width: 140px; 
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+  }
+  .preview { 
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    color: #333;
+  }
+  tbody tr:hover { background: #f9f9f9; }
+  .dir-in { color: #0066cc; }
+  .dir-out { color: #cc6600; }
+
+  /* Dark mode */
+  @media (prefers-color-scheme: dark) {
+    body {
+      background: #1e1e1e;
+      color: #d4d4d4;
+    }
+    header {
+      background: #252526;
+      border-bottom: 1px solid #3e3e42;
+    }
+    #status {
+      color: #aaa;
+    }
+    #status.attached { color: #4ec9b0; }
+    #status.error { color: #f48771; }
+    #counts {
+      color: #aaa;
+    }
+    button {
+      background: #2d2d30;
+      border: 1px solid #3e3e42;
+      color: #ccc;
+    }
+    button:hover {
+      background: #3e3e42;
+    }
+    thead {
+      background: #252526;
+    }
+    th {
+      color: #aaa;
+      border-bottom: 1px solid #3e3e42;
+    }
+    td {
+      border-bottom: 1px solid #3e3e42;
+    }
+    .preview {
+      color: #d4d4d4;
+    }
+    tbody tr:hover {
+      background: #2a2a2a;
+    }
+    .dir-in { color: #4fc3f7; }
+    .dir-out { color: #ffb74d; }
+  }
+</style>
+
+<header>
+  <span id="status">Connecting...</span>
+  <button id="clear">Clear</button>
+  <span id="counts"></span>
+</header>
+
+<table>
+  <thead>
+    <tr>
+      <th class="dir">Dir</th>
+      <th class="type">Type</th>
+      <th class="kind">Kind</th>
+      <th class="pubkey">Pubkey</th>
+      <th class="preview">Preview</th>
+    </tr>
+  </thead>
+  <tbody id="rows"></tbody>
+</table>
+
+<script src="panel.js"></script>
