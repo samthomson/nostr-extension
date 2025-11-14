@@ -24,7 +24,7 @@ The panel HTML is cached and won't update otherwise.
 
 ## todo
 
-- filter on kinds
 - implement summary tab (aggregate stats, unique kinds, etc.)
 - implement build tab (help understand what the client is requesting)
 - three io types; read query, read sub, publish
+- filter on kinds
