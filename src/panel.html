@@ -65,6 +65,7 @@
     padding: 8px 12px;
     background: #f9f9f9;
     border-bottom: 1px solid #ddd;
+    align-items: center;
   }
   
   .btn {
@@ -89,6 +90,24 @@
   
   .btn.paused:hover {
     background: #f57c00;
+  }
+  
+  .checkbox-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: 8px;
+    font-size: 11px;
+    color: #666;
+  }
+  
+  .checkbox-wrapper input[type="checkbox"] {
+    cursor: pointer;
+  }
+  
+  .checkbox-wrapper label {
+    cursor: pointer;
+    user-select: none;
   }
   
   .stream-stats {
@@ -156,11 +175,67 @@
     width: 140px; 
     font-family: 'Courier New', monospace;
     font-size: 11px;
+    position: relative;
   }
+  
+  .pubkey-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  
+  .copy-icon {
+    opacity: 0;
+    cursor: pointer;
+    font-size: 10px;
+    padding: 2px 4px;
+    border-radius: 2px;
+    transition: opacity 0.2s;
+  }
+  
+  .pubkey:hover .copy-icon {
+    opacity: 0.6;
+  }
+  
+  .copy-icon:hover {
+    opacity: 1 !important;
+    background: #f0f0f0;
+  }
+  
+  .copy-feedback {
+    position: absolute;
+    top: -20px;
+    right: 0;
+    background: #4caf50;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    pointer-events: none;
+    animation: fadeOut 1.5s ease-out forwards;
+  }
+  
+  @keyframes fadeOut {
+    0%, 50% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+  
   .preview { 
     font-family: 'Courier New', monospace;
     font-size: 11px;
     color: #333;
+  }
+  
+  .preview-compact {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  .preview-expanded {
+    white-space: pre;
+    font-size: 10px;
+    padding: 4px 0;
   }
   tbody tr:hover { background: #f9f9f9; }
   .dir-in { color: #0066cc; }
@@ -250,7 +325,13 @@
     td {
       border-bottom: 1px solid #3e3e42;
     }
-    .preview {
+    .checkbox-wrapper {
+      color: #aaa;
+    }
+    .copy-icon:hover {
+      background: #3e3e42 !important;
+    }
+    .preview { 
       color: #d4d4d4;
     }
     tbody tr:hover {
@@ -271,6 +352,10 @@
   <div class="stream-controls">
     <button class="btn" id="pauseBtn">Pause</button>
     <button class="btn" id="clearBtn">Clear</button>
+    <div class="checkbox-wrapper">
+      <input type="checkbox" id="expandEventsCheckbox" checked>
+      <label for="expandEventsCheckbox">Expand Events</label>
+    </div>
   </div>
   <div class="stream-stats" id="streamStats">
     <div class="stat">

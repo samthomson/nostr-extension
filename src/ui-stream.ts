@@ -116,6 +116,8 @@ class StreamUI {
   private rowsEl: HTMLElement;
   private pauseBtn: HTMLButtonElement;
   private clearBtn: HTMLButtonElement;
+  private expandCheckbox: HTMLInputElement;
+  private expandEvents: boolean = true;
   private statElements: {
     total: HTMLElement;
     ws: HTMLElement;
@@ -130,6 +132,7 @@ class StreamUI {
     this.rowsEl = document.getElementById("rows")!;
     this.pauseBtn = document.getElementById("pauseBtn") as HTMLButtonElement;
     this.clearBtn = document.getElementById("clearBtn") as HTMLButtonElement;
+    this.expandCheckbox = document.getElementById("expandEventsCheckbox") as HTMLInputElement;
     
     this.statElements = {
       total: document.getElementById("stat-total")!,
@@ -161,6 +164,26 @@ class StreamUI {
       this.clear();
       store.clear();
     });
+    
+    // Expand checkbox
+    this.expandCheckbox.addEventListener("change", () => {
+      this.expandEvents = this.expandCheckbox.checked;
+      this.reRenderAllRows();
+    });
+  }
+  
+  private reRenderAllRows(): void {
+    // Get all current events from store
+    const allEvents = store.getAllEvents();
+    
+    // Clear the table
+    this.rowsEl.innerHTML = "";
+    
+    // Re-render all events with new expand setting
+    // Reverse to maintain newest-first order
+    for (let i = allEvents.length - 1; i >= 0; i--) {
+      this.renderRow(allEvents[i]);
+    }
   }
   
   private updatePauseButton(): void {
@@ -188,16 +211,22 @@ class StreamUI {
   addRow(msg: any): void {
     // Don't add rows if paused
     if (store.isPaused()) return;
+    this.renderRow(msg);
+  }
+  
+  private renderRow(msg: any): void {
     const { dir, frame } = msg;
     const type = frame[0];
     let kind: number | string = "";
     let pubkey = "";
+    let fullPubkey = "";
     
     if (type === "EVENT") {
       const evt: NostrEvent = frame[1]?.kind !== undefined ? frame[1] : frame[2];
       if (evt) {
         kind = evt.kind ?? "";
-        pubkey = evt.pubkey ? evt.pubkey.substring(0, 16) + "..." : "";
+        fullPubkey = evt.pubkey || "";
+        pubkey = fullPubkey ? fullPubkey.substring(0, 16) + "..." : "";
       }
     } else if (type === "REQ") {
       const filters = frame.slice(2) as NostrFilter[];
@@ -210,20 +239,68 @@ class StreamUI {
     }
     
     const tr = document.createElement("tr");
-    const preview = JSON.stringify(frame).substring(0, 100);
     const kindName = getKindName(kind);
     const kindTooltip = kind && kindName ? `${kind} - ${kindName}` : (kind ? String(kind) : "");
+    
+    // Determine what to show in preview
+    let previewContent = "";
+    let previewClass = this.expandEvents ? "preview-expanded" : "preview-compact";
+    
+    if (type === "EVENT") {
+      // Show the event object, not the whole frame
+      const evt = frame[1]?.kind !== undefined ? frame[1] : frame[2];
+      if (this.expandEvents) {
+        previewContent = JSON.stringify(evt, null, 2);
+      } else {
+        previewContent = JSON.stringify(evt).substring(0, 100);
+        if (JSON.stringify(evt).length > 100) previewContent += "...";
+      }
+    } else {
+      // For non-EVENT messages, show the frame
+      if (this.expandEvents) {
+        previewContent = JSON.stringify(frame, null, 2);
+      } else {
+        previewContent = JSON.stringify(frame).substring(0, 100);
+        if (JSON.stringify(frame).length > 100) previewContent += "...";
+      }
+    }
+    
+    // Pubkey cell with copy functionality
+    const pubkeyHtml = fullPubkey 
+      ? `<div class="pubkey-wrapper">
+           <span>${escapeHtml(pubkey)}</span>
+           <span class="copy-icon" data-pubkey="${escapeHtml(fullPubkey)}" title="Copy full pubkey">📋</span>
+         </div>`
+      : "";
     
     tr.innerHTML = `
       <td class="dir dir-${dir}">${dir === "in" ? "←" : "→"}</td>
       <td class="type">${escapeHtml(type)}</td>
       <td class="kind" title="${kindTooltip}">${escapeHtml(String(kind))}</td>
-      <td class="pubkey">${escapeHtml(pubkey)}</td>
-      <td class="preview">${escapeHtml(preview)}${preview.length >= 100 ? "..." : ""}</td>
+      <td class="pubkey">${pubkeyHtml}</td>
+      <td class="preview ${previewClass}">${escapeHtml(previewContent)}</td>
     `;
+    
+    // Add click handler for copy icon
+    const copyIcon = tr.querySelector('.copy-icon');
+    if (copyIcon) {
+      copyIcon.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const pubkeyToCopy = (copyIcon as HTMLElement).dataset.pubkey!;
+        navigator.clipboard.writeText(pubkeyToCopy).then(() => {
+          // Show "Copied!" feedback
+          const feedback = document.createElement('div');
+          feedback.className = 'copy-feedback';
+          feedback.textContent = 'Copied!';
+          (copyIcon.parentElement as HTMLElement).appendChild(feedback);
+          setTimeout(() => feedback.remove(), 1500);
+        });
+      });
+    }
     
     this.rowsEl.insertBefore(tr, this.rowsEl.firstChild);
     
+    // Limit to 500 rows
     if (this.rowsEl.children.length > 500 && this.rowsEl.lastChild) {
       this.rowsEl.removeChild(this.rowsEl.lastChild);
     }

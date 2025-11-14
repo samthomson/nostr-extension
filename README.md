@@ -27,6 +27,7 @@ The panel HTML is cached and won't update otherwise.
 - event count summaries (total events, ws events, nostr events, subs, per kind count)
 - kind number only, literal just on hover
 - better formating of events
+- copy working and for event itself
 - filter on kinds
 - implement summary tab (aggregate stats, unique kinds, etc.)
 - implement build tab (help understand what the client is requesting)
