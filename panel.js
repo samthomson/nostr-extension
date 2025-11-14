@@ -14,6 +14,18 @@ port.onMessage.addListener((msg) => {
 });
 // Auto-attach on load
 port.postMessage({ type: "attach" });
+// Tab switching
+document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+        const targetTab = tab.dataset.tab;
+        // Update active tab
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        // Update active content
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.getElementById(targetTab).classList.add('active');
+    });
+});
 function updateCounts(type) {
     counts.set(type, (counts.get(type) || 0) + 1);
 }

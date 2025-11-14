@@ -8,6 +8,55 @@
     padding: 0;
     background: white;
     color: #333;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+  }
+  
+  .tabs {
+    display: flex;
+    border-bottom: 1px solid #ddd;
+    background: #f5f5f5;
+  }
+  
+  .tab {
+    padding: 8px 16px;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    font-size: 12px;
+    font-weight: 500;
+    color: #666;
+    border-bottom: 2px solid transparent;
+  }
+  
+  .tab:hover {
+    background: #e8e8e8;
+  }
+  
+  .tab.active {
+    color: #000;
+    border-bottom: 2px solid #0066cc;
+    background: white;
+  }
+  
+  .tab-content {
+    display: none;
+    flex: 1;
+    overflow: auto;
+  }
+  
+  .tab-content.active {
+    display: block;
+  }
+  
+  .placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #999;
+    font-size: 14px;
   }
   table { 
     width: 100%; 
@@ -61,6 +110,24 @@
       background: #1e1e1e;
       color: #d4d4d4;
     }
+    .tabs {
+      background: #252526;
+      border-bottom: 1px solid #3e3e42;
+    }
+    .tab {
+      color: #aaa;
+    }
+    .tab:hover {
+      background: #2a2a2a;
+    }
+    .tab.active {
+      color: #fff;
+      border-bottom: 2px solid #4fc3f7;
+      background: #1e1e1e;
+    }
+    .placeholder {
+      color: #666;
+    }
     header {
       background: #252526;
       border-bottom: 1px solid #3e3e42;
@@ -102,17 +169,33 @@
   }
 </style>
 
-<table>
-  <thead>
-    <tr>
-      <th class="dir">Dir</th>
-      <th class="type">Type</th>
-      <th class="kind">Kind</th>
-      <th class="pubkey">Pubkey</th>
-      <th class="preview">Preview</th>
-    </tr>
-  </thead>
-  <tbody id="rows"></tbody>
-</table>
+<div class="tabs">
+  <button class="tab active" data-tab="stream">Event Stream</button>
+  <button class="tab" data-tab="summary">Summary</button>
+  <button class="tab" data-tab="build">Build</button>
+</div>
+
+<div class="tab-content active" id="stream">
+  <table>
+    <thead>
+      <tr>
+        <th class="dir">Dir</th>
+        <th class="type">Type</th>
+        <th class="kind">Kind</th>
+        <th class="pubkey">Pubkey</th>
+        <th class="preview">Preview</th>
+      </tr>
+    </thead>
+    <tbody id="rows"></tbody>
+  </table>
+</div>
+
+<div class="tab-content" id="summary">
+  <div class="placeholder">Summary view coming soon...</div>
+</div>
+
+<div class="tab-content" id="build">
+  <div class="placeholder">Build view coming soon...</div>
+</div>
 
 <script src="panel.js"></script>

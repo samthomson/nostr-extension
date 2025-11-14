@@ -26,8 +26,5 @@ The panel HTML is cached and won't update otherwise.
 
 - better formating of events
 - filter on kinds
-- sep tabs
-  - full stream of events
-  - summary
-  - build
-- ditch weird banner thing, think of a better ux there
+- implement summary tab (aggregate stats, unique kinds, etc.)
+- implement build tab (help understand what the client is requesting)
