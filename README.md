@@ -24,7 +24,6 @@ The panel HTML is cached and won't update otherwise.
 
 ## todo
 
-- better formating of events
 - copy working and for event itself
 - filter on kinds
 - implement summary tab (aggregate stats, unique kinds, etc.)
