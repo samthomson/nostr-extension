@@ -1,10 +1,9 @@
 {
-	"manifest_version": 3,
-	"name": "Nostr WS Inspector",
-	"version": "1.0.3",
-	"permissions": ["debugger", "activeTab", "storage"],
-	"host_permissions": ["<all_urls>"],
-	"background": { "service_worker": "bg.js" },
-	"devtools_page": "devtools.html"
-  }
-  
+  "manifest_version": 3,
+  "name": "Nostr WS Inspector",
+  "version": "1.1.0",
+  "permissions": ["debugger", "activeTab", "storage"],
+  "host_permissions": ["<all_urls>"],
+  "background": { "service_worker": "dist/bg.js", "type": "module" },
+  "devtools_page": "dist/devtools.html"
+}

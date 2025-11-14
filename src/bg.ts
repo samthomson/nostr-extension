@@ -1,10 +1,12 @@
+import type { NostrMessageType, TabState, NostrFrame, PanelMessage, BackgroundMessage } from "./types";
+
 // Nostr message types we care about
-const NOSTR_TYPES = new Set(["REQ", "EVENT", "EOSE", "NOTICE", "CLOSE", "AUTH", "COUNT", "OK"]);
+const NOSTR_TYPES = new Set<NostrMessageType>(["REQ", "EVENT", "EOSE", "NOTICE", "CLOSE", "AUTH", "COUNT", "OK"]);
 
 // Track debugger state per tab
-const tabs = new Map(); // tabId -> {attached: boolean, port: Port}
+const tabs = new Map<number, TabState>();
 
-chrome.runtime.onConnect.addListener((port) => {
+chrome.runtime.onConnect.addListener((port: chrome.runtime.Port) => {
   const match = port.name.match(/^devtools-(\d+)$/);
   if (!match) return;
   
@@ -15,15 +17,19 @@ chrome.runtime.onConnect.addListener((port) => {
   tabs.set(tabId, state);
   
   // Handle attach requests
-  port.onMessage.addListener(async (msg) => {
+  port.onMessage.addListener(async (msg: PanelMessage) => {
     if (msg.type === "attach" && !state.attached) {
       try {
         await chrome.debugger.attach({ tabId }, "1.3");
         await chrome.debugger.sendCommand({ tabId }, "Network.enable");
         state.attached = true;
-        port.postMessage({ type: "status", ok: true });
+        port.postMessage({ type: "status", ok: true } as BackgroundMessage);
       } catch (err) {
-        port.postMessage({ type: "status", ok: false, error: String(err) });
+        port.postMessage({ 
+          type: "status", 
+          ok: false, 
+          error: String(err) 
+        } as BackgroundMessage);
       }
     }
   });
@@ -38,19 +44,23 @@ chrome.runtime.onConnect.addListener((port) => {
 });
 
 // Listen for WebSocket frames
-chrome.debugger.onEvent.addListener((source, method, params) => {
+chrome.debugger.onEvent.addListener((
+  source: chrome.debugger.Debuggee,
+  method: string,
+  params?: any
+) => {
   if (method !== "Network.webSocketFrameSent" && method !== "Network.webSocketFrameReceived") {
     return;
   }
   
-  const state = tabs.get(source.tabId);
+  const state = tabs.get(source.tabId!);
   if (!state || !state.attached || !state.port) return;
   
-  const data = params.response?.payloadData;
+  const data = params?.response?.payloadData;
   if (typeof data !== "string") return;
   
   // Try to parse as JSON array
-  let frame;
+  let frame: any;
   try {
     frame = JSON.parse(data);
   } catch {
@@ -68,14 +78,17 @@ chrome.debugger.onEvent.addListener((source, method, params) => {
   state.port.postMessage({
     type: "nostr",
     dir: direction,
-    frame: frame,
+    frame: frame as NostrFrame,
     timestamp: params.timestamp
-  });
+  } as BackgroundMessage);
 });
 
 // Handle debugger detach events
-chrome.debugger.onDetach.addListener((source, reason) => {
-  const state = tabs.get(source.tabId);
+chrome.debugger.onDetach.addListener((
+  source: chrome.debugger.Debuggee,
+  reason: string
+) => {
+  const state = tabs.get(source.tabId!);
   if (state) {
     state.attached = false;
     if (state.port) {
@@ -83,7 +96,8 @@ chrome.debugger.onDetach.addListener((source, reason) => {
         type: "status", 
         ok: false, 
         error: `Debugger detached: ${reason}` 
-      });
+      } as BackgroundMessage);
     }
   }
 });
+

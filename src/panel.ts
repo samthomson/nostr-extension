@@ -1,7 +1,9 @@
-const counts = new Map();
-const statusEl = document.getElementById("status");
-const countsEl = document.getElementById("counts");
-const rowsEl = document.getElementById("rows");
+import type { BackgroundMessage, NostrEvent, NostrFilter, KindNames, PanelMessage } from "./types";
+
+const counts = new Map<string, number>();
+const statusEl = document.getElementById("status")!;
+const countsEl = document.getElementById("counts")!;
+const rowsEl = document.getElementById("rows")!;
 
 // Get the tab ID from chrome.devtools API
 const tabId = chrome.devtools.inspectedWindow.tabId;
@@ -10,7 +12,7 @@ const tabId = chrome.devtools.inspectedWindow.tabId;
 const port = chrome.runtime.connect({ name: `devtools-${tabId}` });
 
 // Handle messages from background
-port.onMessage.addListener((msg) => {
+port.onMessage.addListener((msg: BackgroundMessage) => {
   if (msg.type === "status") {
     if (msg.ok) {
       statusEl.textContent = "✓ Listening";
@@ -33,11 +35,11 @@ port.onDisconnect.addListener(() => {
 });
 
 // Auto-attach on load
-port.postMessage({ type: "attach" });
+port.postMessage({ type: "attach" } as PanelMessage);
 
-function updateCounts(type) {
+function updateCounts(type: string): void {
   counts.set(type, (counts.get(type) || 0) + 1);
-  const parts = [];
+  const parts: string[] = [];
   for (const [k, v] of counts.entries()) {
     parts.push(`${k}: ${v}`);
   }
@@ -45,7 +47,7 @@ function updateCounts(type) {
 }
 
 // Common Nostr event kind descriptions (NIP-01, NIP-25, NIP-28, NIP-57, etc.)
-const KIND_NAMES = {
+const KIND_NAMES: KindNames = {
   0: "Profile",
   1: "Text Note",
   2: "Relay Rec",
@@ -134,26 +136,28 @@ const KIND_NAMES = {
   34236: "Short Video"
 };
 
-function getKindName(kind) {
+function getKindName(kind: number | string): string {
   if (!kind) return "";
-  return KIND_NAMES[kind] || "";
+  const kindNum = typeof kind === "string" ? parseInt(kind, 10) : kind;
+  return KIND_NAMES[kindNum] || "";
 }
 
-function addRow({dir, frame}) {
+function addRow(msg: BackgroundMessage & { type: "nostr" }): void {
+  const { dir, frame } = msg;
   const type = frame[0];
-  let kind = "";
+  let kind: number | string = "";
   let pubkey = "";
   
   if (type === "EVENT") {
-    const evt = frame[1]?.kind !== undefined ? frame[1] : frame[2];
+    const evt: NostrEvent = frame[1]?.kind !== undefined ? frame[1] : frame[2];
     if (evt) {
       kind = evt.kind ?? "";
       pubkey = evt.pubkey ? evt.pubkey.substring(0, 16) + "..." : "";
     }
   } else if (type === "REQ") {
-    const filters = frame.slice(2);
+    const filters = frame.slice(2) as NostrFilter[];
     for (const f of filters) {
-      if (f?.kinds?.length > 0) {
+      if (f?.kinds?.length && f.kinds.length > 0) {
         kind = f.kinds[0];
         break;
       }
@@ -175,18 +179,18 @@ function addRow({dir, frame}) {
   
   rowsEl.insertBefore(tr, rowsEl.firstChild);
   
-  if (rowsEl.children.length > 500) {
+  if (rowsEl.children.length > 500 && rowsEl.lastChild) {
     rowsEl.removeChild(rowsEl.lastChild);
   }
 }
 
-function escapeHtml(str) {
+function escapeHtml(str: string): string {
   const div = document.createElement('div');
   div.textContent = str;
   return div.innerHTML;
 }
 
-document.getElementById("clear").addEventListener("click", () => {
+document.getElementById("clear")!.addEventListener("click", () => {
   rowsEl.innerHTML = "";
   counts.clear();
   countsEl.textContent = "";
