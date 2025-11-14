@@ -176,13 +176,13 @@ class StreamUI {
   
   private updateStats(): void {
     const stats = store.getStats();
-    this.statElements.total.textContent = stats.total.toString();
-    this.statElements.ws.textContent = stats.wsEvents.toString();
-    this.statElements.nostr.textContent = stats.nostrEvents.toString();
-    this.statElements.subsOpened.textContent = stats.subsOpened.toString();
-    this.statElements.subsClosed.textContent = stats.subsClosed.toString();
-    this.statElements.subsOpen.textContent = stats.subsOpen.toString();
-    this.statElements.kinds.textContent = stats.uniqueKinds.toString();
+    this.statElements.total.textContent = stats.total.toLocaleString();
+    this.statElements.ws.textContent = stats.wsEvents.toLocaleString();
+    this.statElements.nostr.textContent = stats.nostrEvents.toLocaleString();
+    this.statElements.subsOpened.textContent = stats.subsOpened.toLocaleString();
+    this.statElements.subsClosed.textContent = stats.subsClosed.toLocaleString();
+    this.statElements.subsOpen.textContent = stats.subsOpen.toLocaleString();
+    this.statElements.kinds.textContent = stats.uniqueKinds.toLocaleString();
   }
   
   addRow(msg: any): void {
