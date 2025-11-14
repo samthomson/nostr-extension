@@ -9,7 +9,6 @@ chrome.runtime.onConnect.addListener((port) => {
   if (!match) return;
   
   const tabId = Number(match[1]);
-  console.log(`[bg] DevTools connected for tab ${tabId}`);
   
   let state = tabs.get(tabId) || { attached: false, port: null };
   state.port = port;
@@ -18,15 +17,12 @@ chrome.runtime.onConnect.addListener((port) => {
   // Handle attach requests
   port.onMessage.addListener(async (msg) => {
     if (msg.type === "attach" && !state.attached) {
-      console.log(`[bg] Attaching debugger to tab ${tabId}`);
       try {
         await chrome.debugger.attach({ tabId }, "1.3");
         await chrome.debugger.sendCommand({ tabId }, "Network.enable");
         state.attached = true;
-        console.log(`[bg] ✓ Debugger attached to tab ${tabId}`);
         port.postMessage({ type: "status", ok: true });
       } catch (err) {
-        console.error(`[bg] ✗ Failed to attach debugger:`, err);
         port.postMessage({ type: "status", ok: false, error: String(err) });
       }
     }
@@ -34,7 +30,6 @@ chrome.runtime.onConnect.addListener((port) => {
   
   // Cleanup on disconnect
   port.onDisconnect.addListener(() => {
-    console.log(`[bg] DevTools disconnected for tab ${tabId}`);
     if (state.attached) {
       chrome.debugger.detach({ tabId }).catch(() => {});
     }
@@ -69,8 +64,6 @@ chrome.debugger.onEvent.addListener((source, method, params) => {
   
   const direction = method.endsWith("Sent") ? "out" : "in";
   
-  console.log(`[bg] Nostr ${direction}: ${frame[0]}`);
-  
   // Send to devtools panel
   state.port.postMessage({
     type: "nostr",
@@ -82,7 +75,6 @@ chrome.debugger.onEvent.addListener((source, method, params) => {
 
 // Handle debugger detach events
 chrome.debugger.onDetach.addListener((source, reason) => {
-  console.log(`[bg] Debugger detached from tab ${source.tabId}: ${reason}`);
   const state = tabs.get(source.tabId);
   if (state) {
     state.attached = false;
@@ -95,5 +87,3 @@ chrome.debugger.onDetach.addListener((source, reason) => {
     }
   }
 });
-
-console.log("[bg] Nostr WS Inspector background script loaded");
