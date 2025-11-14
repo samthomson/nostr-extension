@@ -271,30 +271,19 @@ class StreamUI {
         // Add click handlers using event delegation on the row
         tr.addEventListener('click', (e) => {
             const target = e.target;
-            const debugEl = document.getElementById('debugMsg');
-            if (debugEl)
-                debugEl.textContent = `Clicked: ${target.tagName}.${target.className}`;
             // Check if we clicked on a copy icon or its child
             const copyIcon = target.closest('.copy-icon');
             if (copyIcon) {
                 e.preventDefault();
                 e.stopPropagation();
-                if (debugEl)
-                    debugEl.textContent = 'Copy icon found!';
                 let textToCopy = '';
                 if (copyIcon.classList.contains('copy-pubkey')) {
                     textToCopy = tr.__copyData.pubkey;
-                    if (debugEl)
-                        debugEl.textContent = 'Copying pubkey...';
                 }
                 else if (copyIcon.classList.contains('copy-event')) {
                     textToCopy = tr.__copyData.event;
-                    if (debugEl)
-                        debugEl.textContent = 'Copying event...';
                 }
                 if (!textToCopy) {
-                    if (debugEl)
-                        debugEl.textContent = 'ERROR: No text to copy';
                     return;
                 }
                 // Use old-school execCommand since Clipboard API is blocked in DevTools
@@ -308,22 +297,11 @@ class StreamUI {
                     const success = document.execCommand('copy');
                     document.body.removeChild(textarea);
                     if (success) {
-                        if (debugEl)
-                            debugEl.textContent = 'Copied!';
                         showCopyFeedback(copyIcon);
-                        setTimeout(() => {
-                            if (debugEl)
-                                debugEl.textContent = '';
-                        }, 2000);
-                    }
-                    else {
-                        if (debugEl)
-                            debugEl.textContent = 'ERROR: Copy failed';
                     }
                 }
                 catch (err) {
-                    if (debugEl)
-                        debugEl.textContent = 'ERROR: ' + err.message;
+                    // Silently fail
                 }
             }
         });
