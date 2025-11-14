@@ -116,13 +116,36 @@ class StreamUI {
   private rowsEl: HTMLElement;
   private pauseBtn: HTMLButtonElement;
   private clearBtn: HTMLButtonElement;
+  private statElements: {
+    total: HTMLElement;
+    ws: HTMLElement;
+    nostr: HTMLElement;
+    subsOpened: HTMLElement;
+    subsClosed: HTMLElement;
+    subsOpen: HTMLElement;
+    kinds: HTMLElement;
+  };
   
   constructor() {
     this.rowsEl = document.getElementById("rows")!;
     this.pauseBtn = document.getElementById("pauseBtn") as HTMLButtonElement;
     this.clearBtn = document.getElementById("clearBtn") as HTMLButtonElement;
     
+    this.statElements = {
+      total: document.getElementById("stat-total")!,
+      ws: document.getElementById("stat-ws")!,
+      nostr: document.getElementById("stat-nostr")!,
+      subsOpened: document.getElementById("stat-subs-opened")!,
+      subsClosed: document.getElementById("stat-subs-closed")!,
+      subsOpen: document.getElementById("stat-subs-open")!,
+      kinds: document.getElementById("stat-kinds")!
+    };
+    
     this.setupControls();
+    this.updateStats();
+    
+    // Subscribe to store changes to update stats
+    store.subscribe(() => this.updateStats());
   }
   
   private setupControls(): void {
@@ -149,6 +172,17 @@ class StreamUI {
       this.pauseBtn.textContent = "Pause";
       this.pauseBtn.classList.remove("paused");
     }
+  }
+  
+  private updateStats(): void {
+    const stats = store.getStats();
+    this.statElements.total.textContent = stats.total.toString();
+    this.statElements.ws.textContent = stats.wsEvents.toString();
+    this.statElements.nostr.textContent = stats.nostrEvents.toString();
+    this.statElements.subsOpened.textContent = stats.subsOpened.toString();
+    this.statElements.subsClosed.textContent = stats.subsClosed.toString();
+    this.statElements.subsOpen.textContent = stats.subsOpen.toString();
+    this.statElements.kinds.textContent = stats.uniqueKinds.toString();
   }
   
   addRow(msg: any): void {

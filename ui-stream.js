@@ -105,7 +105,19 @@ class StreamUI {
         this.rowsEl = document.getElementById("rows");
         this.pauseBtn = document.getElementById("pauseBtn");
         this.clearBtn = document.getElementById("clearBtn");
+        this.statElements = {
+            total: document.getElementById("stat-total"),
+            ws: document.getElementById("stat-ws"),
+            nostr: document.getElementById("stat-nostr"),
+            subsOpened: document.getElementById("stat-subs-opened"),
+            subsClosed: document.getElementById("stat-subs-closed"),
+            subsOpen: document.getElementById("stat-subs-open"),
+            kinds: document.getElementById("stat-kinds")
+        };
         this.setupControls();
+        this.updateStats();
+        // Subscribe to store changes to update stats
+        store.subscribe(() => this.updateStats());
     }
     setupControls() {
         // Pause button
@@ -130,6 +142,16 @@ class StreamUI {
             this.pauseBtn.textContent = "Pause";
             this.pauseBtn.classList.remove("paused");
         }
+    }
+    updateStats() {
+        const stats = store.getStats();
+        this.statElements.total.textContent = stats.total.toString();
+        this.statElements.ws.textContent = stats.wsEvents.toString();
+        this.statElements.nostr.textContent = stats.nostrEvents.toString();
+        this.statElements.subsOpened.textContent = stats.subsOpened.toString();
+        this.statElements.subsClosed.textContent = stats.subsClosed.toString();
+        this.statElements.subsOpen.textContent = stats.subsOpen.toString();
+        this.statElements.kinds.textContent = stats.uniqueKinds.toString();
     }
     addRow(msg) {
         // Don't add rows if paused

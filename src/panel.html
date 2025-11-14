@@ -90,6 +90,35 @@
   .btn.paused:hover {
     background: #f57c00;
   }
+  
+  .stream-stats {
+    display: flex;
+    gap: 16px;
+    padding: 8px 12px;
+    background: white;
+    border-bottom: 1px solid #ddd;
+    font-size: 11px;
+    flex-wrap: wrap;
+  }
+  
+  .stat {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  
+  .stat-label {
+    color: #666;
+    font-weight: 500;
+    text-transform: uppercase;
+    font-size: 10px;
+  }
+  
+  .stat-value {
+    font-size: 16px;
+    font-weight: 700;
+    color: #000;
+  }
   table { 
     width: 100%; 
     border-collapse: collapse; 
@@ -180,6 +209,16 @@
     .btn.paused:hover {
       background: #f57c00;
     }
+    .stream-stats {
+      background: #1e1e1e;
+      border-bottom: 1px solid #3e3e42;
+    }
+    .stat-label {
+      color: #aaa;
+    }
+    .stat-value {
+      color: #fff;
+    }
     header {
       background: #252526;
       border-bottom: 1px solid #3e3e42;
@@ -231,6 +270,36 @@
   <div class="stream-controls">
     <button class="btn" id="pauseBtn">Pause</button>
     <button class="btn" id="clearBtn">Clear</button>
+  </div>
+  <div class="stream-stats" id="streamStats">
+    <div class="stat">
+      <div class="stat-label">Total</div>
+      <div class="stat-value" id="stat-total">0</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">WS Events</div>
+      <div class="stat-value" id="stat-ws">0</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Nostr Events</div>
+      <div class="stat-value" id="stat-nostr">0</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Subs Opened</div>
+      <div class="stat-value" id="stat-subs-opened">0</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Subs Closed</div>
+      <div class="stat-value" id="stat-subs-closed">0</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Subs Open</div>
+      <div class="stat-value" id="stat-subs-open">0</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Unique Kinds</div>
+      <div class="stat-value" id="stat-kinds">0</div>
+    </div>
   </div>
   <table>
     <thead>

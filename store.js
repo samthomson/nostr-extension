@@ -5,11 +5,21 @@ class NostrStore {
         this.events = [];
         this.listeners = [];
         this.paused = false;
+        this.subscriptions = new Set(); // Track open subscription IDs
+        this.closedSubscriptions = new Set(); // Track closed subscription IDs
     }
     // Add a new event
     addEvent(msg) {
         if (!this.paused) {
             this.events.push(msg);
+            // Track subscriptions
+            const type = msg.frame[0];
+            if (type === "REQ" && msg.frame[1]) {
+                this.subscriptions.add(msg.frame[1]); // REQ subscription ID is second element
+            }
+            else if (type === "CLOSE" && msg.frame[1]) {
+                this.closedSubscriptions.add(msg.frame[1]);
+            }
             this.notify();
         }
     }
@@ -77,9 +87,37 @@ class NostrStore {
         }
         return { in: inCount, out: outCount };
     }
+    // Get stats
+    getStats() {
+        const wsTypes = new Set(["REQ", "EOSE", "CLOSE", "NOTICE", "OK", "AUTH", "COUNT"]);
+        let wsEventCount = 0;
+        let nostrEventCount = 0;
+        for (const event of this.events) {
+            const type = event.frame[0];
+            if (type === "EVENT") {
+                nostrEventCount++;
+            }
+            else if (wsTypes.has(type)) {
+                wsEventCount++;
+            }
+        }
+        const uniqueKinds = this.getKindCounts().size;
+        const openSubs = this.subscriptions.size - this.closedSubscriptions.size;
+        return {
+            total: this.events.length,
+            wsEvents: wsEventCount,
+            nostrEvents: nostrEventCount,
+            subsOpened: this.subscriptions.size,
+            subsClosed: this.closedSubscriptions.size,
+            subsOpen: Math.max(0, openSubs),
+            uniqueKinds: uniqueKinds
+        };
+    }
     // Clear all data
     clear() {
         this.events = [];
+        this.subscriptions.clear();
+        this.closedSubscriptions.clear();
         this.notify();
     }
     // Subscribe to changes
