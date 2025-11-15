@@ -25,10 +25,16 @@ function showCopyFeedback(iconEl) {
 class StreamUI {
     constructor() {
         this.expandEvents = false;
+        this.includeWsEvents = false;
+        this.selectedKinds = null; // null = show all (no filter)
+        this.allKinds = new Set();
         this.rowsEl = document.getElementById("rows");
         this.pauseBtn = document.getElementById("pauseBtn");
         this.clearBtn = document.getElementById("clearBtn");
         this.expandCheckbox = document.getElementById("expandEventsCheckbox");
+        this.includeWsEventsCheckbox = document.getElementById("includeWsEventsCheckbox");
+        this.filterDropdown = document.getElementById("kindFilterDropdown");
+        this.filterHeader = document.getElementById("kindFilterHeader");
         this.statElements = {
             total: document.getElementById("stat-total"),
             ws: document.getElementById("stat-ws"),
@@ -39,9 +45,13 @@ class StreamUI {
             kinds: document.getElementById("stat-kinds")
         };
         this.setupControls();
+        this.setupKindFilter();
         this.updateStats();
         // Subscribe to store changes to update stats
-        store.subscribe(() => this.updateStats());
+        store.subscribe(() => {
+            this.updateStats();
+            this.updateKindFilterOptions();
+        });
     }
     setupControls() {
         // Pause button
@@ -60,16 +70,157 @@ class StreamUI {
             this.expandEvents = this.expandCheckbox.checked;
             this.reRenderAllRows();
         });
+        // Include WebSocket events checkbox
+        this.includeWsEventsCheckbox.addEventListener("change", () => {
+            this.includeWsEvents = this.includeWsEventsCheckbox.checked;
+            this.reRenderAllRows();
+        });
+    }
+    setupKindFilter() {
+        // Toggle dropdown
+        this.filterHeader.addEventListener("click", (e) => {
+            e.stopPropagation();
+            this.filterDropdown.classList.toggle("active");
+        });
+        // Close dropdown when clicking outside
+        document.addEventListener("click", () => {
+            this.filterDropdown.classList.remove("active");
+        });
+        this.filterDropdown.addEventListener("click", (e) => {
+            e.stopPropagation();
+        });
+        // Search functionality
+        const searchInput = document.getElementById("kindFilterSearch");
+        searchInput.addEventListener("input", () => {
+            this.filterKindOptions(searchInput.value);
+        });
+        // Select All button
+        const selectAllBtn = document.getElementById("kindFilterSelectAll");
+        selectAllBtn.addEventListener("click", () => {
+            this.selectedKinds = null; // null means no filter, show all
+            this.updateKindFilterOptions(true); // force update to refresh checkboxes
+            this.updateFilterHeaderStyle();
+            this.reRenderAllRows();
+        });
+        // Clear button
+        const clearBtn = document.getElementById("kindFilterClear");
+        clearBtn.addEventListener("click", () => {
+            this.selectedKinds = new Set(); // empty set means show nothing
+            this.updateKindFilterOptions(true); // force update to refresh checkboxes
+            this.updateFilterHeaderStyle();
+            this.reRenderAllRows();
+        });
+    }
+    updateKindFilterOptions(forceUpdate = false) {
+        const optionsContainer = document.getElementById("kindFilterOptions");
+        const allEvents = store.getAllEvents();
+        // Collect all unique kinds from events
+        const newKinds = new Set();
+        for (const event of allEvents) {
+            const type = event.frame[0];
+            if (type === "EVENT") {
+                const evt = event.frame[1]?.kind !== undefined ? event.frame[1] : event.frame[2];
+                if (evt?.kind !== undefined) {
+                    newKinds.add(evt.kind);
+                }
+            }
+        }
+        // Update if kinds have changed OR if forced
+        const kindsChanged = newKinds.size !== this.allKinds.size ||
+            ![...newKinds].every(k => this.allKinds.has(k));
+        if (kindsChanged || forceUpdate) {
+            this.allKinds = newKinds;
+            // Sort kinds
+            const sortedKinds = Array.from(this.allKinds).sort((a, b) => a - b);
+            optionsContainer.innerHTML = sortedKinds.map(kind => {
+                const kindName = getKindName(kind);
+                const label = kindName ? `${kind} - ${kindName}` : String(kind);
+                const checked = this.selectedKinds === null || this.selectedKinds.has(kind);
+                return `
+          <label class="filter-option">
+            <input type="checkbox" data-kind="${kind}" ${checked ? 'checked' : ''}>
+            <span>${escapeHtml(label)}</span>
+          </label>
+        `;
+            }).join('');
+            // Add event listeners to checkboxes
+            optionsContainer.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                checkbox.addEventListener("change", (e) => {
+                    const target = e.target;
+                    const kind = parseInt(target.dataset.kind);
+                    // Initialize filter if not yet active
+                    if (this.selectedKinds === null) {
+                        // Start with all kinds selected except the one being unchecked
+                        this.selectedKinds = new Set(this.allKinds);
+                    }
+                    if (target.checked) {
+                        this.selectedKinds.add(kind);
+                        // If all are now selected, clear the filter (show all)
+                        if (this.selectedKinds.size === this.allKinds.size) {
+                            this.selectedKinds = null;
+                        }
+                    }
+                    else {
+                        this.selectedKinds.delete(kind);
+                    }
+                    this.updateFilterHeaderStyle();
+                    this.reRenderAllRows();
+                });
+            });
+        }
+    }
+    filterKindOptions(searchTerm) {
+        const optionsContainer = document.getElementById("kindFilterOptions");
+        const options = optionsContainer.querySelectorAll('.filter-option');
+        options.forEach(option => {
+            const text = option.textContent?.toLowerCase() || '';
+            const matches = text.includes(searchTerm.toLowerCase());
+            option.style.display = matches ? 'flex' : 'none';
+        });
+    }
+    updateFilterHeaderStyle() {
+        // Show filter as active if it's not null (meaning a filter is applied)
+        if (this.selectedKinds !== null) {
+            this.filterHeader.classList.add("filter-active");
+        }
+        else {
+            this.filterHeader.classList.remove("filter-active");
+        }
+    }
+    shouldShowEvent(msg) {
+        const type = msg.frame[0];
+        // Filter WebSocket protocol events (REQ, CLOSE, EOSE) unless includeWsEvents is checked
+        if (type !== "EVENT" && !this.includeWsEvents) {
+            return false;
+        }
+        // If it's not an EVENT, show it (because includeWsEvents must be true at this point)
+        if (type !== "EVENT")
+            return true;
+        // For EVENT messages, apply kind filter
+        // If no filter is active (null), show all
+        if (this.selectedKinds === null)
+            return true;
+        // If filter is active but empty, show nothing
+        if (this.selectedKinds.size === 0)
+            return false;
+        // Check if event kind is in selected kinds
+        const evt = msg.frame[1]?.kind !== undefined ? msg.frame[1] : msg.frame[2];
+        if (evt?.kind !== undefined) {
+            return this.selectedKinds.has(evt.kind);
+        }
+        return true;
     }
     reRenderAllRows() {
         // Get all current events from store
         const allEvents = store.getAllEvents();
         // Clear the table
         this.rowsEl.innerHTML = "";
-        // Re-render all events with new expand setting
+        // Re-render filtered events with new expand setting
         // Reverse to maintain newest-first order
         for (let i = allEvents.length - 1; i >= 0; i--) {
-            this.renderRow(allEvents[i]);
+            if (this.shouldShowEvent(allEvents[i])) {
+                this.renderRow(allEvents[i]);
+            }
         }
     }
     updatePauseButton() {
@@ -94,8 +245,10 @@ class StreamUI {
         this.statElements.kinds.textContent = stats.uniqueKinds.toLocaleString();
     }
     addRow(msg) {
-        // Don't add rows if paused
+        // Don't add rows if paused or filtered out
         if (store.isPaused())
+            return;
+        if (!this.shouldShowEvent(msg))
             return;
         this.renderRow(msg);
     }

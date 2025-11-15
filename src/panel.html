@@ -148,6 +148,7 @@
     background: #f9f9f9;
     position: sticky;
     top: 0;
+    z-index: 10;
   }
   th, td { 
     border-bottom: 1px solid #eee; 
@@ -159,6 +160,97 @@
     font-size: 11px;
     text-transform: uppercase;
     color: #666;
+    position: relative;
+  }
+  
+  .filter-header {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    user-select: none;
+  }
+  
+  .filter-icon {
+    font-size: 10px;
+    opacity: 0.5;
+  }
+  
+  .filter-header:hover .filter-icon {
+    opacity: 1;
+  }
+  
+  .filter-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    padding: 8px;
+    min-width: 200px;
+    max-height: 300px;
+    overflow-y: auto;
+    z-index: 1000;
+    display: none;
+  }
+  
+  .filter-dropdown.active {
+    display: block;
+  }
+  
+  .filter-search {
+    width: 100%;
+    padding: 6px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    font-size: 11px;
+    margin-bottom: 8px;
+  }
+  
+  .filter-option {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px;
+    font-size: 11px;
+    cursor: pointer;
+    border-radius: 2px;
+  }
+  
+  .filter-option:hover {
+    background: #f0f0f0;
+  }
+  
+  .filter-option input[type="checkbox"] {
+    cursor: pointer;
+  }
+  
+  .filter-actions {
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid #eee;
+  }
+  
+  .filter-btn {
+    flex: 1;
+    padding: 4px 8px;
+    border: 1px solid #ddd;
+    background: white;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 10px;
+  }
+  
+  .filter-btn:hover {
+    background: #f0f0f0;
+  }
+  
+  .filter-active {
+    color: #0066cc !important;
   }
   .dir { 
     width: 50px; 
@@ -529,6 +621,30 @@
       color: #aaa;
       border-bottom: 1px solid #3e3e42;
     }
+    .filter-dropdown {
+      background: #252526;
+      border-color: #3e3e42;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    }
+    .filter-search {
+      background: #1e1e1e;
+      border-color: #3e3e42;
+      color: #d4d4d4;
+    }
+    .filter-option:hover {
+      background: #2a2a2a;
+    }
+    .filter-btn {
+      background: #2d2d30;
+      border-color: #3e3e42;
+      color: #ccc;
+    }
+    .filter-btn:hover {
+      background: #3e3e42;
+    }
+    .filter-actions {
+      border-top-color: #3e3e42;
+    }
     td {
       border-bottom: 1px solid #3e3e42;
     }
@@ -634,10 +750,14 @@
   <div class="stream-controls">
     <button class="btn" id="pauseBtn">Pause</button>
     <button class="btn" id="clearBtn">Clear</button>
-    <div class="checkbox-wrapper">
-      <input type="checkbox" id="expandEventsCheckbox">
-      <label for="expandEventsCheckbox">Expand Events</label>
-    </div>
+  <div class="checkbox-wrapper">
+    <input type="checkbox" id="expandEventsCheckbox">
+    <label for="expandEventsCheckbox">Expand Events</label>
+  </div>
+  <div class="checkbox-wrapper">
+    <input type="checkbox" id="includeWsEventsCheckbox">
+    <label for="includeWsEventsCheckbox">Include WebSocket Events</label>
+  </div>
   </div>
   <div class="stream-stats" id="streamStats">
     <div class="stat">
@@ -674,7 +794,20 @@
       <tr>
         <th class="dir">Dir</th>
         <th class="type">Type</th>
-        <th class="kind">Kind</th>
+        <th class="kind">
+          <div class="filter-header" id="kindFilterHeader">
+            <span>Kind</span>
+            <span class="filter-icon">▼</span>
+          </div>
+          <div class="filter-dropdown" id="kindFilterDropdown">
+            <input type="text" class="filter-search" id="kindFilterSearch" placeholder="Search kinds...">
+            <div id="kindFilterOptions"></div>
+            <div class="filter-actions">
+              <button class="filter-btn" id="kindFilterSelectAll">All</button>
+              <button class="filter-btn" id="kindFilterClear">Clear</button>
+            </div>
+          </div>
+        </th>
         <th class="pubkey">Pubkey</th>
         <th class="preview">Preview</th>
       </tr>
