@@ -42,8 +42,20 @@ function escapeHtmlSummary(str) {
     return div.innerHTML;
 }
 class SummaryUI {
+    constructor() {
+        // Subscribe to store changes and re-render when data updates
+        store.subscribe(() => {
+            // Only render if the summary tab is currently active
+            const summaryTab = document.getElementById("summary");
+            if (summaryTab && summaryTab.classList.contains("active")) {
+                this.render();
+            }
+        });
+    }
     render() {
         const container = document.getElementById("summary");
+        if (!container)
+            return;
         const stats = store.getStats();
         const kindCounts = store.getKindCounts();
         const allEvents = store.getAllEvents();
