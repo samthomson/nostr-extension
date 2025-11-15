@@ -3,9 +3,11 @@
 const SUMMARY_KIND_NAMES = {
     0: "Metadata", 1: "Text Note", 2: "Relay Rec", 3: "Contacts", 4: "DM", 5: "Event Deletion",
     6: "Repost", 7: "Reaction", 8: "Badge Award", 9: "Group Chat", 10: "Group Note", 11: "Group Reply",
-    12: "Group Thread", 13: "Seal", 16: "Generic Repost", 40: "Channel Create", 41: "Channel Metadata",
+    12: "Group Thread", 13: "Seal", 14: "Direct Message", 16: "Generic Repost", 20: "Picture Event",
+    22: "Short Video Event", 40: "Channel Create", 41: "Channel Metadata",
     42: "Channel Message", 43: "Channel Hide", 44: "Channel Mute", 818: "Merge Requests",
     1021: "Bid", 1022: "Bid confirmation", 1040: "OpenTimestamps", 1059: "Gift Wrap", 1063: "File Metadata",
+    1068: "Poll", 1111: "Comment", 1222: "Voice Message", 1244: "Voice Message Reply",
     1311: "Live Chat Message", 1617: "Patches", 1621: "Issues", 1622: "Replies", 1630: "Status",
     1971: "Problem Tracker", 1984: "Reporting", 1985: "Label", 2003: "Tortuga Index", 2004: "Tortuga comment",
     2022: "Coinjoin Pool", 4550: "Community Post Approval", 5000: "DM relays", 5999: "Nip90: Data Vending",
@@ -15,7 +17,8 @@ const SUMMARY_KIND_NAMES = {
     10004: "Communities", 10005: "Public chats", 10006: "Blocked relays", 10007: "Search relays",
     10009: "User groups", 10015: "Interests list", 10019: "Nutzap Mints", 10030: "User emoji list",
     10050: "Relay list", 10063: "User server list", 10096: "File storage", 13194: "Wallet Info",
-    21000: "Lightning Pub RPC", 22242: "Client Auth", 23194: "Wallet Request", 23195: "Wallet Response",
+    13534: "Relay Access Metadata", 21000: "Lightning Pub RPC", 22242: "Client Auth",
+    23194: "Wallet Request", 23195: "Wallet Response",
     24133: "Nostr Connect", 27235: "HTTP Auth", 30000: "Categorized People", 30001: "Categorized Bookmarks",
     30002: "Relay Sets", 30003: "Bookmark Sets", 30004: "Curation Sets", 30005: "Video Sets",
     30007: "Mute Sets", 30008: "Profile Badges", 30009: "Badge Definition", 30015: "Interest Sets",
@@ -26,8 +29,9 @@ const SUMMARY_KIND_NAMES = {
     30388: "Slide Set", 30402: "Classified Listing", 30403: "Draft Classified Listing",
     30617: "Repository", 30618: "Repository", 30819: "Timestamp", 31234: "Draft Event",
     31388: "Link Set", 31890: "Feed", 31922: "Date-Based Calendar Event", 31923: "Time-Based Calendar Event",
-    31924: "Calendar", 31925: "Calendar Event RSVP", 31989: "Handler recommendation",
-    31990: "Handler information", 34235: "Video Event", 34236: "Short-form Portrait Video Event",
+    31924: "Calendar", 31925: "Calendar Event RSVP", 31987: "Review",
+    31989: "Handler recommendation", 31990: "Handler information",
+    34235: "Video Event", 34236: "Short-form Portrait Video Event",
     34237: "Video View Event", 34550: "Community Definition", 38383: "Peer-to-peer Order events"
 };
 function getSummaryKindName(kind) {
