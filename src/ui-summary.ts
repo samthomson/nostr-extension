@@ -59,6 +59,10 @@ class SummaryUI {
     const container = document.getElementById("summary");
     if (!container) return;
     
+    // Save scroll position before re-rendering
+    const scrollContainer = container.querySelector('.summary-container') as HTMLElement;
+    const scrollTop = scrollContainer ? scrollContainer.scrollTop : 0;
+    
     const stats = store.getStats();
     const kindCounts = store.getKindCounts();
     const allEvents = store.getAllEvents();
@@ -151,6 +155,12 @@ class SummaryUI {
         ` : '<div class="empty-state">No Nostr events captured yet</div>'}
       </div>
     `;
+    
+    // Restore scroll position after re-rendering
+    const newScrollContainer = container.querySelector('.summary-container') as HTMLElement;
+    if (newScrollContainer && scrollTop > 0) {
+      newScrollContainer.scrollTop = scrollTop;
+    }
   }
 }
 
