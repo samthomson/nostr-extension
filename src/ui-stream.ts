@@ -12,7 +12,7 @@ interface NostrFilter {
 
 // KIND_NAMES is defined globally in kinds.js (loaded first in panel.html)
 function getKindName(kind: number | string): string {
-  if (!kind) return "";
+  if (kind === undefined || kind === null || kind === "") return "";
   const kindNum = typeof kind === "string" ? parseInt(kind, 10) : kind;
   return KIND_NAMES[kindNum] || "";
 }
