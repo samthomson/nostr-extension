@@ -1,6 +1,6 @@
 // Shared Nostr event kind descriptions
 // This file is loaded first and defines KIND_NAMES globally
-const KIND_NAMES = {
+var KIND_NAMES: { [kind: number]: string } = {
   0: "Profile",
   1: "Text Note",
   2: "Relay Rec",
