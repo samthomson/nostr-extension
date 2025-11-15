@@ -26,5 +26,4 @@ The panel HTML is cached and won't update otherwise.
 
 - implement build tab (help understand what the client is requesting)
 - three io types; read query, read sub, publish
-- filter on kinds
 - map/link to nips
