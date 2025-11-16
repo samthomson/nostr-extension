@@ -26,3 +26,4 @@ The panel HTML is cached and won't update otherwise.
 
 - implement build tab (help understand what the client is requesting)
 - map/link to nips
+- instructions for building/installing
