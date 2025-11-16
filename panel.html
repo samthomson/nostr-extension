@@ -827,6 +827,19 @@
 </div>
 
 <div class="content-wrapper disabled" id="contentWrapper">
+  <div class="stream-controls">
+    <button class="btn" id="pauseBtn">Pause</button>
+    <button class="btn" id="clearBtn">Clear</button>
+    <div class="checkbox-wrapper">
+      <input type="checkbox" id="expandEventsCheckbox">
+      <label for="expandEventsCheckbox">Expand Events</label>
+    </div>
+    <div class="checkbox-wrapper">
+      <input type="checkbox" id="includeWsEventsCheckbox">
+      <label for="includeWsEventsCheckbox">Include WebSocket Events</label>
+    </div>
+  </div>
+
   <div class="tabs">
     <button class="tab active" data-tab="stream">Event Stream</button>
     <button class="tab" data-tab="summary">Summary</button>
@@ -834,18 +847,6 @@
   </div>
 
   <div class="tab-content active" id="stream">
-  <div class="stream-controls">
-    <button class="btn" id="pauseBtn">Pause</button>
-    <button class="btn" id="clearBtn">Clear</button>
-  <div class="checkbox-wrapper">
-    <input type="checkbox" id="expandEventsCheckbox">
-    <label for="expandEventsCheckbox">Expand Events</label>
-  </div>
-  <div class="checkbox-wrapper">
-    <input type="checkbox" id="includeWsEventsCheckbox">
-    <label for="includeWsEventsCheckbox">Include WebSocket Events</label>
-  </div>
-  </div>
   <div class="stream-stats" id="streamStats">
     <div class="stat">
       <div class="stat-label">Total</div>

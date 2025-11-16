@@ -51,15 +51,15 @@ port.onMessage.addListener((msg: any) => {
     // Update stream UI
     streamUI.addRow(msg);
   } else if (msg.type === "status") {
-    // Only update UI if attaching (detach is handled optimistically)
-    // or if there was an error (to revert optimistic update)
-    if (msg.attached || msg.error) {
-      updateInspectionUI(msg.attached);
-    }
+    console.log('[Panel] Status received:', msg);
+    // Always sync UI with actual state from background
+    updateInspectionUI(msg.attached);
     
-    if (msg.error) {
+    if (msg.error && msg.attached === false) {
+      // Only log detach "errors" (which are just reasons), not actual errors
+      console.log('Debugger detached:', msg.error);
+    } else if (msg.error) {
       console.error('Inspection error:', msg.error);
-      // Could show error in UI if needed
     }
   }
 });

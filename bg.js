@@ -99,14 +99,16 @@ chrome.debugger.onEvent.addListener((source, method, params) => {
 });
 // Handle debugger detach events
 chrome.debugger.onDetach.addListener((source, reason) => {
+    console.log('[BG] onDetach fired, reason:', reason);
     const state = tabs.get(source.tabId);
     if (state) {
         state.attached = false;
+        console.log('[BG] State set to detached');
         if (state.port) {
+            // Don't send error for user-initiated detach
             state.port.postMessage({
                 type: "status",
-                attached: false,
-                error: `Debugger detached: ${reason}`
+                attached: false
             });
         }
     }
