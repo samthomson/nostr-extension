@@ -3,6 +3,39 @@
 const tabId = chrome.devtools.inspectedWindow.tabId;
 // Connect directly to background
 const port = chrome.runtime.connect({ name: `devtools-${tabId}` });
+// Track inspection state
+let isInspecting = false;
+// UI elements
+const toggleBtn = document.getElementById('toggleInspectionBtn');
+const statusSpan = document.getElementById('inspectionStatus');
+// Update UI based on inspection state
+function updateInspectionUI(inspecting) {
+    isInspecting = inspecting;
+    if (inspecting) {
+        toggleBtn.textContent = 'Stop Inspecting';
+        toggleBtn.classList.add('inspecting');
+        statusSpan.textContent = '🟢 Inspecting WebSocket traffic';
+        statusSpan.classList.add('active');
+    }
+    else {
+        toggleBtn.textContent = 'Start Inspecting';
+        toggleBtn.classList.remove('inspecting');
+        statusSpan.textContent = 'Not inspecting';
+        statusSpan.classList.remove('active');
+    }
+}
+// Handle toggle button click
+toggleBtn.addEventListener('click', () => {
+    if (isInspecting) {
+        // Optimistically update UI immediately for better UX
+        updateInspectionUI(false);
+        port.postMessage({ type: "detach" });
+    }
+    else {
+        // For attach, wait for confirmation since it can fail
+        port.postMessage({ type: "attach" });
+    }
+});
 // Handle messages from background
 port.onMessage.addListener((msg) => {
     if (msg.type === "nostr") {
@@ -11,9 +44,20 @@ port.onMessage.addListener((msg) => {
         // Update stream UI
         streamUI.addRow(msg);
     }
+    else if (msg.type === "status") {
+        // Only update UI if attaching (detach is handled optimistically)
+        // or if there was an error (to revert optimistic update)
+        if (msg.attached || msg.error) {
+            updateInspectionUI(msg.attached);
+        }
+        if (msg.error) {
+            console.error('Inspection error:', msg.error);
+            // Could show error in UI if needed
+        }
+    }
 });
-// Auto-attach on load
-port.postMessage({ type: "attach" });
+// Initialize UI
+updateInspectionUI(false);
 // Tab switching
 document.querySelectorAll('.tab').forEach(tab => {
     tab.addEventListener('click', () => {

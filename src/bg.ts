@@ -21,20 +21,30 @@ chrome.runtime.onConnect.addListener((port: chrome.runtime.Port) => {
   state.port = port;
   tabs.set(tabId, state);
   
-  // Handle attach requests
+  // Handle attach/detach requests
   port.onMessage.addListener(async (msg: any) => {
     if (msg.type === "attach" && !state.attached) {
       try {
         await chrome.debugger.attach({ tabId }, "1.3");
         await chrome.debugger.sendCommand({ tabId }, "Network.enable");
         state.attached = true;
-        port.postMessage({ type: "status", ok: true });
+        port.postMessage({ type: "status", attached: true });
       } catch (err) {
         port.postMessage({ 
           type: "status", 
-          ok: false, 
+          attached: false, 
           error: String(err) 
         });
+      }
+    } else if (msg.type === "detach" && state.attached) {
+      try {
+        await chrome.debugger.detach({ tabId });
+        state.attached = false;
+        port.postMessage({ type: "status", attached: false });
+      } catch (err) {
+        // Ignore errors on detach
+        state.attached = false;
+        port.postMessage({ type: "status", attached: false });
       }
     }
   });
@@ -99,7 +109,7 @@ chrome.debugger.onDetach.addListener((
     if (state.port) {
       state.port.postMessage({ 
         type: "status", 
-        ok: false, 
+        attached: false, 
         error: `Debugger detached: ${reason}` 
       });
     }
