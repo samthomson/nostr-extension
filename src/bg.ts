@@ -23,26 +23,45 @@ chrome.runtime.onConnect.addListener((port: chrome.runtime.Port) => {
   
   // Handle attach/detach requests
   port.onMessage.addListener(async (msg: any) => {
-    if (msg.type === "attach" && !state.attached) {
+    console.log('[BG] Message received:', msg.type, 'Current state.attached:', state.attached);
+    
+    if (msg.type === "attach") {
+      if (state.attached) {
+        console.log('[BG] Already attached, ignoring');
+        port.postMessage({ type: "status", attached: true });
+        return;
+      }
+      
       try {
+        console.log('[BG] Attaching debugger...');
         await chrome.debugger.attach({ tabId }, "1.3");
         await chrome.debugger.sendCommand({ tabId }, "Network.enable");
         state.attached = true;
+        console.log('[BG] Attached successfully');
         port.postMessage({ type: "status", attached: true });
       } catch (err) {
+        console.error('[BG] Attach failed:', err);
         port.postMessage({ 
           type: "status", 
           attached: false, 
           error: String(err) 
         });
       }
-    } else if (msg.type === "detach" && state.attached) {
+    } else if (msg.type === "detach") {
+      if (!state.attached) {
+        console.log('[BG] Already detached, ignoring');
+        port.postMessage({ type: "status", attached: false });
+        return;
+      }
+      
       try {
+        console.log('[BG] Detaching debugger...');
         await chrome.debugger.detach({ tabId });
         state.attached = false;
+        console.log('[BG] Detached successfully');
         port.postMessage({ type: "status", attached: false });
       } catch (err) {
-        // Ignore errors on detach
+        console.error('[BG] Detach error (ignoring):', err);
         state.attached = false;
         port.postMessage({ type: "status", attached: false });
       }
