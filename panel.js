@@ -76,5 +76,8 @@ document.querySelectorAll('.tab').forEach(tab => {
         if (targetTab === 'summary') {
             summaryUI.render();
         }
+        else if (targetTab === 'build') {
+            buildUI.render();
+        }
     });
 });

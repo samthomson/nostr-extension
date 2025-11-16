@@ -83,6 +83,8 @@ document.querySelectorAll('.tab').forEach(tab => {
     // Render tab content if needed
     if (targetTab === 'summary') {
       summaryUI.render();
+    } else if (targetTab === 'build') {
+      buildUI.render();
     }
   });
 });
