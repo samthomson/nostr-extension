@@ -56,6 +56,19 @@
     color: #0066cc;
   }
   
+  .content-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .content-wrapper.disabled {
+    opacity: 0.4;
+    pointer-events: none;
+  }
+  
   .tabs {
     display: flex;
     border-bottom: 1px solid #ddd;
@@ -611,6 +624,9 @@
     .inspection-status.active {
       color: #4db8ff;
     }
+    .content-wrapper.disabled {
+      opacity: 0.3;
+    }
     .tabs {
       background: #252526;
       border-bottom: 1px solid #3e3e42;
@@ -810,13 +826,14 @@
   <span class="inspection-status" id="inspectionStatus">Not inspecting</span>
 </div>
 
-<div class="tabs">
-  <button class="tab active" data-tab="stream">Event Stream</button>
-  <button class="tab" data-tab="summary">Summary</button>
-  <button class="tab" data-tab="build">Build</button>
-</div>
+<div class="content-wrapper disabled" id="contentWrapper">
+  <div class="tabs">
+    <button class="tab active" data-tab="stream">Event Stream</button>
+    <button class="tab" data-tab="summary">Summary</button>
+    <button class="tab" data-tab="build">Build</button>
+  </div>
 
-<div class="tab-content active" id="stream">
+  <div class="tab-content active" id="stream">
   <div class="stream-controls">
     <button class="btn" id="pauseBtn">Pause</button>
     <button class="btn" id="clearBtn">Clear</button>
@@ -892,6 +909,7 @@
 
 <div class="tab-content" id="build">
   <div class="placeholder">Build view coming soon...</div>
+</div>
 </div>
 
 <script src="kinds.js"></script>

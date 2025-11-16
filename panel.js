@@ -8,6 +8,7 @@ let isInspecting = false;
 // UI elements
 const toggleBtn = document.getElementById('toggleInspectionBtn');
 const statusSpan = document.getElementById('inspectionStatus');
+const contentWrapper = document.getElementById('contentWrapper');
 // Update UI based on inspection state
 function updateInspectionUI(inspecting) {
     isInspecting = inspecting;
@@ -16,12 +17,14 @@ function updateInspectionUI(inspecting) {
         toggleBtn.classList.add('inspecting');
         statusSpan.textContent = '🟢 Inspecting WebSocket traffic';
         statusSpan.classList.add('active');
+        contentWrapper.classList.remove('disabled');
     }
     else {
         toggleBtn.textContent = 'Start Inspecting';
         toggleBtn.classList.remove('inspecting');
         statusSpan.textContent = 'Not inspecting';
         statusSpan.classList.remove('active');
+        contentWrapper.classList.add('disabled');
     }
 }
 // Handle toggle button click

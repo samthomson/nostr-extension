@@ -10,6 +10,7 @@ let isInspecting = false;
 // UI elements
 const toggleBtn = document.getElementById('toggleInspectionBtn') as HTMLButtonElement;
 const statusSpan = document.getElementById('inspectionStatus') as HTMLSpanElement;
+const contentWrapper = document.getElementById('contentWrapper') as HTMLDivElement;
 
 // Update UI based on inspection state
 function updateInspectionUI(inspecting: boolean): void {
@@ -20,11 +21,13 @@ function updateInspectionUI(inspecting: boolean): void {
     toggleBtn.classList.add('inspecting');
     statusSpan.textContent = '🟢 Inspecting WebSocket traffic';
     statusSpan.classList.add('active');
+    contentWrapper.classList.remove('disabled');
   } else {
     toggleBtn.textContent = 'Start Inspecting';
     toggleBtn.classList.remove('inspecting');
     statusSpan.textContent = 'Not inspecting';
     statusSpan.classList.remove('active');
+    contentWrapper.classList.add('disabled');
   }
 }
 
