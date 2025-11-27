@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Nostr WS Inspector",
-  "version": "1.9.1",
+  "version": "1.9.2",
   "permissions": ["debugger", "tabs"],
   "host_permissions": ["<all_urls>"],
   "background": { "service_worker": "bg.js" },
