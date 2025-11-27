@@ -3,14 +3,57 @@
 const NOSTR_TYPES = new Set(["REQ", "EVENT", "EOSE", "NOTICE", "CLOSE", "AUTH", "COUNT", "OK"]);
 // Track debugger state per tab
 const tabs = new Map();
+// Handle messages (for getTabId request)
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+    if (msg.type === "getTabId") {
+        // Find the tab that has devtools open
+        // We can't directly know which tab, but we can use a heuristic:
+        // Get all tabs and find one that might have devtools
+        // Actually, a better approach: use chrome.tabs.query to get the active tab
+        // But devtools panels don't have a direct way to identify their tab
+        // So we'll use a different approach: track connections and match them
+        // For now, try to get the tab from the sender if available
+        if (sender.tab && sender.tab.id !== undefined) {
+            sendResponse({ tabId: sender.tab.id });
+            return true;
+        }
+        // Fallback: query for active tab (not perfect but better than nothing)
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+            if (tabs.length > 0 && tabs[0].id !== undefined) {
+                sendResponse({ tabId: tabs[0].id });
+            }
+            else {
+                sendResponse({ error: "Could not determine tab ID" });
+            }
+        });
+        return true; // Keep channel open for async response
+    }
+});
 chrome.runtime.onConnect.addListener((port) => {
     const match = port.name.match(/^devtools-(\d+)$/);
-    if (!match)
+    if (!match) {
+        // Handle connection without tab ID - try to identify the tab
+        if (port.name === "devtools-panel" || port.name.startsWith("devtools-")) {
+            // Try to find the tab by querying
+            chrome.tabs.query({ active: true, currentWindow: true }, (queryTabs) => {
+                if (queryTabs.length > 0 && queryTabs[0].id !== undefined) {
+                    const tabId = queryTabs[0].id;
+                    let state = tabs.get(tabId) || { attached: false, port: null };
+                    state.port = port;
+                    tabs.set(tabId, state);
+                    setupPortHandlers(port, tabId, state);
+                }
+            });
+        }
         return;
+    }
     const tabId = Number(match[1]);
     let state = tabs.get(tabId) || { attached: false, port: null };
     state.port = port;
     tabs.set(tabId, state);
+    setupPortHandlers(port, tabId, state);
+});
+function setupPortHandlers(port, tabId, state) {
     // Handle attach/detach requests
     port.onMessage.addListener(async (msg) => {
         console.log('[BG] Message received:', msg.type, 'Current state.attached:', state.attached);
@@ -64,7 +107,7 @@ chrome.runtime.onConnect.addListener((port) => {
         }
         tabs.delete(tabId);
     });
-});
+}
 // Listen for WebSocket frames
 chrome.debugger.onEvent.addListener((source, method, params) => {
     if (method !== "Network.webSocketFrameSent" && method !== "Network.webSocketFrameReceived") {
