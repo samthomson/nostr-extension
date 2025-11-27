@@ -69,3 +69,12 @@ To see logs from `bg.js`:
 
 ### DevTools Panel
 Console logs from `panel.js` appear in the **DevTools console of the page you're inspecting** (not the extension's console).
+
+## Project Structure
+
+- `src/` - TypeScript source files
+- `store-assets/` - Marketing assets for Chrome Web Store submission
+  - `marquee-promo-tile.jpg` - Marquee promotional tile (440x280px)
+  - `small-promo-tile.jpg` - Small promotional tile (920x680px)
+  - Screenshots for store listing
+- `screenshots/` - Development and testing screenshots
