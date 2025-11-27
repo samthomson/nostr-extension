@@ -5,7 +5,8 @@
   "scripts": {
     "build": "tsc && cp src/devtools.html . && cp src/panel.html .",
     "watch": "tsc --watch",
-    "clean": "rm -f *.js devtools.html panel.html"
+    "clean": "rm -f *.js devtools.html panel.html",
+    "package": "npm run build && zip -r extension.zip manifest.json *.js *.html -x 'node_modules/*' 'src/*' 'screenshots/*' 'store-assets/*' '.git/*' '*.zip' '*.log' '.DS_Store' 'README.md' 'package.json' 'tsconfig.json' 'yarn.lock'"
   },
   "devDependencies": {
     "@types/chrome": "^0.0.268",
