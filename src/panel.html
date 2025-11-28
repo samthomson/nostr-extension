@@ -330,15 +330,21 @@
     width: 60px; 
     font-weight: 500;
     font-size: 11px;
+    vertical-align: middle;
   }
   
-  .dir-in {
-    color: #0066cc;
-  }
-  
-  .dir-out {
+  .dir-label {
     display: inline-block;
-    background: #0066cc;
+    padding-left: 8px;
+  }
+  
+  .dir-in .dir-label {
+    color: #9c27b0;
+  }
+  
+  .dir-out .dir-label {
+    display: inline-block;
+    background: #9c27b0;
     color: white;
     padding: 2px 8px;
     border-radius: 12px;
@@ -875,11 +881,11 @@
     tbody tr:hover {
       background: #2a2a2a;
     }
-    .dir-in { 
-      color: #4fc3f7; 
+    .dir-in .dir-label { 
+      color: #ba68c8; 
     }
-    .dir-out {
-      background: #4fc3f7;
+    .dir-out .dir-label {
+      background: #ba68c8;
       color: white;
     }
     
@@ -1048,7 +1054,7 @@
   <table>
     <thead>
       <tr>
-        <th class="dir">Dir</th>
+        <th class="dir">I/O</th>
         <th class="type">Type</th>
         <th class="kind">
           <div class="filter-header" id="kindFilterHeader">

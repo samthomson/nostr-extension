@@ -317,7 +317,9 @@ class StreamUI {
          </div>`
             : "";
         tr.innerHTML = `
-      <td class="dir dir-${dir}">${dir === "in" ? "read" : "write"}</td>
+      <td class="dir dir-${dir}">
+        <span class="dir-label">${dir === "in" ? "read" : "write"}</span>
+      </td>
       <td class="type">${escapeHtml(type)}</td>
       <td class="kind" title="${kindTooltip}">${escapeHtml(String(kind))}</td>
       <td class="pubkey">${pubkeyHtml}</td>
