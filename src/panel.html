@@ -327,9 +327,23 @@
     color: #0066cc !important;
   }
   .dir { 
-    width: 50px; 
-    font-weight: 600;
-    font-family: 'Courier New', monospace;
+    width: 60px; 
+    font-weight: 500;
+    font-size: 11px;
+  }
+  
+  .dir-in {
+    color: #0066cc;
+  }
+  
+  .dir-out {
+    display: inline-block;
+    background: #0066cc;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-weight: 500;
+    font-size: 10px;
   }
   .type { width: 80px; font-family: 'Courier New', monospace; }
   .kind { 
@@ -444,8 +458,6 @@
     min-width: 0;
   }
   tbody tr:hover { background: #f9f9f9; }
-  .dir-in { color: #0066cc; }
-  .dir-out { color: #cc6600; }
 
   /* Summary tab styles */
   .summary-container {
@@ -863,8 +875,13 @@
     tbody tr:hover {
       background: #2a2a2a;
     }
-    .dir-in { color: #4fc3f7; }
-    .dir-out { color: #ffb74d; }
+    .dir-in { 
+      color: #4fc3f7; 
+    }
+    .dir-out {
+      background: #4fc3f7;
+      color: white;
+    }
     
     /* Summary dark mode */
     .summary-title {
