@@ -381,9 +381,15 @@ class StreamUI {
          </div>`
       : "";
     
+    const isEventMessage = type === "EVENT";
+    const ioText = isEventMessage
+      ? (dir === "in" ? "read" : "write")
+      : (dir === "in" ? "in" : "out");
+    const dirKindClass = isEventMessage ? "dir-nostr" : "dir-ws";
+
     tr.innerHTML = `
-      <td class="dir dir-${dir}">
-        <span class="dir-label">${dir === "in" ? "read" : "write"}</span>
+      <td class="dir dir-${dir} ${dirKindClass}">
+        <span class="dir-label">${ioText}</span>
       </td>
       <td class="type">${escapeHtml(type)}</td>
       <td class="kind" title="${kindTooltip}">${escapeHtml(String(kind))}</td>

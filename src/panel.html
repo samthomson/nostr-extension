@@ -338,11 +338,12 @@
     padding-left: 8px;
   }
   
-  .dir-in .dir-label {
+  /* Nostr EVENT read/write styling */
+  .dir-nostr.dir-in .dir-label {
     color: #9c27b0;
   }
   
-  .dir-out .dir-label {
+  .dir-nostr.dir-out .dir-label {
     display: inline-block;
     background: #9c27b0;
     color: white;
@@ -350,6 +351,14 @@
     border-radius: 12px;
     font-weight: 500;
     font-size: 10px;
+  }
+  
+  /* WebSocket protocol messages (REQ/EOSE/etc) */
+  .dir-ws .dir-label {
+    color: #888;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
   }
   .type { width: 80px; font-family: 'Courier New', monospace; }
   .kind { 
@@ -881,12 +890,15 @@
     tbody tr:hover {
       background: #2a2a2a;
     }
-    .dir-in .dir-label { 
+    .dir-nostr.dir-in .dir-label { 
       color: #ba68c8; 
     }
-    .dir-out .dir-label {
+    .dir-nostr.dir-out .dir-label {
       background: #ba68c8;
       color: white;
+    }
+    .dir-ws .dir-label {
+      color: #aaa;
     }
     
     /* Summary dark mode */
