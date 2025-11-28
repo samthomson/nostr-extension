@@ -383,8 +383,8 @@ class StreamUI {
     
     const isEventMessage = type === "EVENT";
     const ioText = isEventMessage
-      ? (dir === "in" ? "read" : "write")
-      : (dir === "in" ? "in" : "out");
+      ? (dir === "in" ? "READ" : "WRITE")
+      : (dir === "in" ? "IN" : "OUT");
     const dirKindClass = isEventMessage ? "dir-nostr" : "dir-ws";
 
     tr.innerHTML = `
