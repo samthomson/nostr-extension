@@ -281,6 +281,7 @@
     border-radius: 3px;
     font-size: 11px;
     margin-bottom: 8px;
+    box-sizing: border-box;
   }
   
   .filter-option {
@@ -1086,8 +1087,34 @@
             </div>
           </div>
         </th>
-        <th class="pubkey">Pubkey</th>
-        <th class="relay">Relay</th>
+        <th class="pubkey">
+          <div class="filter-header" id="pubkeyFilterHeader">
+            <span>Pubkey</span>
+            <span class="filter-icon">▼</span>
+          </div>
+          <div class="filter-dropdown" id="pubkeyFilterDropdown">
+            <input type="text" class="filter-search" id="pubkeyFilterSearch" placeholder="Search pubkeys...">
+            <div id="pubkeyFilterOptions"></div>
+            <div class="filter-actions">
+              <button class="filter-btn" id="pubkeyFilterSelectAll">All</button>
+              <button class="filter-btn" id="pubkeyFilterClear">Clear</button>
+            </div>
+          </div>
+        </th>
+        <th class="relay">
+          <div class="filter-header" id="relayFilterHeader">
+            <span>Relay</span>
+            <span class="filter-icon">▼</span>
+          </div>
+          <div class="filter-dropdown" id="relayFilterDropdown">
+            <input type="text" class="filter-search" id="relayFilterSearch" placeholder="Search relays...">
+            <div id="relayFilterOptions"></div>
+            <div class="filter-actions">
+              <button class="filter-btn" id="relayFilterSelectAll">All</button>
+              <button class="filter-btn" id="relayFilterClear">Clear</button>
+            </div>
+          </div>
+        </th>
         <th class="preview">Preview</th>
       </tr>
     </thead>

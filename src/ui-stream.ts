@@ -36,6 +36,140 @@ function showCopyFeedback(iconEl: HTMLElement): void {
   setTimeout(() => feedback.remove(), 1000);
 }
 
+// Reusable column filter for dropdown filtering
+class ColumnFilter<T extends string | number> {
+  private selected: Set<T> | null = null; // null = show all
+  private allValues: Set<T> = new Set();
+  private dropdown: HTMLElement;
+  private header: HTMLElement;
+  private optionsContainer: HTMLElement;
+  private searchInput: HTMLInputElement;
+  private formatLabel: (value: T) => string;
+  private onChange: () => void;
+
+  constructor(
+    idPrefix: string,
+    formatLabel: (value: T) => string,
+    onChange: () => void
+  ) {
+    this.dropdown = document.getElementById(`${idPrefix}FilterDropdown`)!;
+    this.header = document.getElementById(`${idPrefix}FilterHeader`)!;
+    this.optionsContainer = document.getElementById(`${idPrefix}FilterOptions`)!;
+    this.searchInput = document.getElementById(`${idPrefix}FilterSearch`) as HTMLInputElement;
+    this.formatLabel = formatLabel;
+    this.onChange = onChange;
+    this.setup(idPrefix);
+  }
+
+  private setup(idPrefix: string): void {
+    // Toggle dropdown
+    this.header.addEventListener("click", (e) => {
+      e.stopPropagation();
+      // Close other dropdowns
+      document.querySelectorAll('.filter-dropdown.active').forEach(d => {
+        if (d !== this.dropdown) d.classList.remove('active');
+      });
+      this.dropdown.classList.toggle("active");
+    });
+
+    this.dropdown.addEventListener("click", (e) => e.stopPropagation());
+
+    // Search
+    this.searchInput.addEventListener("input", () => {
+      this.filterOptions(this.searchInput.value);
+    });
+
+    // Select All
+    document.getElementById(`${idPrefix}FilterSelectAll`)!.addEventListener("click", () => {
+      this.selected = null;
+      this.updateOptions(true);
+      this.updateHeaderStyle();
+      this.onChange();
+    });
+
+    // Clear
+    document.getElementById(`${idPrefix}FilterClear`)!.addEventListener("click", () => {
+      this.selected = new Set();
+      this.updateOptions(true);
+      this.updateHeaderStyle();
+      this.onChange();
+    });
+  }
+
+  updateOptions(forceUpdate: boolean = false, values: Set<T> = this.allValues): void {
+    const valuesChanged = values.size !== this.allValues.size ||
+      ![...values].every(v => this.allValues.has(v));
+
+    if (valuesChanged || forceUpdate) {
+      this.allValues = new Set(values);
+      const sorted = Array.from(this.allValues).sort((a, b) => 
+        String(a).localeCompare(String(b), undefined, { numeric: true })
+      );
+
+      this.optionsContainer.innerHTML = sorted.map(value => {
+        const label = this.formatLabel(value);
+        const checked = this.selected === null || this.selected.has(value);
+        return `
+          <label class="filter-option">
+            <input type="checkbox" data-value="${escapeHtml(String(value))}" ${checked ? 'checked' : ''}>
+            <span>${escapeHtml(label)}</span>
+          </label>
+        `;
+      }).join('');
+
+      this.optionsContainer.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+        checkbox.addEventListener("change", (e) => {
+          const target = e.target as HTMLInputElement;
+          const rawValue = target.dataset.value!;
+          const value = (typeof [...this.allValues][0] === 'number' 
+            ? parseInt(rawValue, 10) 
+            : rawValue) as T;
+
+          if (this.selected === null) {
+            this.selected = new Set(this.allValues);
+          }
+
+          if (target.checked) {
+            this.selected.add(value);
+            if (this.selected.size === this.allValues.size) {
+              this.selected = null;
+            }
+          } else {
+            this.selected.delete(value);
+          }
+
+          this.updateHeaderStyle();
+          this.onChange();
+        });
+      });
+    }
+  }
+
+  private filterOptions(searchTerm: string): void {
+    this.optionsContainer.querySelectorAll('.filter-option').forEach(option => {
+      const text = (option as HTMLElement).textContent?.toLowerCase() || '';
+      (option as HTMLElement).style.display = text.includes(searchTerm.toLowerCase()) ? 'flex' : 'none';
+    });
+  }
+
+  private updateHeaderStyle(): void {
+    this.header.classList.toggle("filter-active", this.selected !== null);
+  }
+
+  isSelected(value: T): boolean {
+    if (this.selected === null) return true;
+    return this.selected.has(value);
+  }
+
+  hasFilter(): boolean {
+    return this.selected !== null;
+  }
+
+  isEmpty(): boolean {
+    return this.selected !== null && this.selected.size === 0;
+  }
+}
+
 class StreamUI {
   private rowsEl: HTMLElement;
   private pauseBtn: HTMLButtonElement;
@@ -44,10 +178,14 @@ class StreamUI {
   private includeWsEventsCheckbox: HTMLInputElement;
   private expandEvents: boolean = false;
   private includeWsEvents: boolean = false;
-  private selectedKinds: Set<number> | null = null; // null = show all (no filter)
-  private allKinds: Set<number> = new Set();
-  private filterDropdown: HTMLElement;
-  private filterHeader: HTMLElement;
+  private kindFilter: ColumnFilter<number>;
+  private pubkeyFilter: ColumnFilter<string>;
+  private relayFilter: ColumnFilter<string>;
+  // Track unique values incrementally (more efficient than rebuilding each time)
+  private uniqueKinds = new Set<number>();
+  private uniquePubkeys = new Set<string>();
+  private uniqueRelays = new Set<string>();
+  private lastEventCount = 0;
   private statElements: {
     total: HTMLElement;
     ws: HTMLElement;
@@ -64,8 +202,6 @@ class StreamUI {
     this.clearBtn = document.getElementById("clearBtn") as HTMLButtonElement;
     this.expandCheckbox = document.getElementById("expandEventsCheckbox") as HTMLInputElement;
     this.includeWsEventsCheckbox = document.getElementById("includeWsEventsCheckbox") as HTMLInputElement;
-    this.filterDropdown = document.getElementById("kindFilterDropdown")!;
-    this.filterHeader = document.getElementById("kindFilterHeader")!;
     
     this.statElements = {
       total: document.getElementById("stat-total")!,
@@ -77,14 +213,26 @@ class StreamUI {
       kinds: document.getElementById("stat-kinds")!
     };
     
+    const reRender = () => this.reRenderAllRows();
+    
+    this.kindFilter = new ColumnFilter<number>("kind", (kind) => {
+      const name = getKindName(kind);
+      return name ? `${kind} - ${name}` : String(kind);
+    }, reRender);
+    
+    this.pubkeyFilter = new ColumnFilter<string>("pubkey", (pk) => 
+      pk.substring(0, 8) + "..." + pk.substring(pk.length - 8), reRender);
+    
+    this.relayFilter = new ColumnFilter<string>("relay", (r) => r || "(no relay)", reRender);
+    
     this.setupControls();
-    this.setupKindFilter();
+    this.setupDropdownClose();
     this.updateStats();
     
     // Subscribe to store changes to update stats
     store.subscribe(() => {
       this.updateStats();
-      this.updateKindFilterOptions();
+      this.updateFilterOptions();
     });
   }
   
@@ -115,133 +263,45 @@ class StreamUI {
     });
   }
   
-  private setupKindFilter(): void {
-    // Toggle dropdown
-    this.filterHeader.addEventListener("click", (e) => {
-      e.stopPropagation();
-      this.filterDropdown.classList.toggle("active");
-    });
-    
-    // Close dropdown when clicking outside
+  private setupDropdownClose(): void {
+    // Close all dropdowns when clicking outside
     document.addEventListener("click", () => {
-      this.filterDropdown.classList.remove("active");
-    });
-    
-    this.filterDropdown.addEventListener("click", (e) => {
-      e.stopPropagation();
-    });
-    
-    // Search functionality
-    const searchInput = document.getElementById("kindFilterSearch") as HTMLInputElement;
-    searchInput.addEventListener("input", () => {
-      this.filterKindOptions(searchInput.value);
-    });
-    
-    // Select All button
-    const selectAllBtn = document.getElementById("kindFilterSelectAll")!;
-    selectAllBtn.addEventListener("click", () => {
-      this.selectedKinds = null; // null means no filter, show all
-      this.updateKindFilterOptions(true); // force update to refresh checkboxes
-      this.updateFilterHeaderStyle();
-      this.reRenderAllRows();
-    });
-    
-    // Clear button
-    const clearBtn = document.getElementById("kindFilterClear")!;
-    clearBtn.addEventListener("click", () => {
-      this.selectedKinds = new Set(); // empty set means show nothing
-      this.updateKindFilterOptions(true); // force update to refresh checkboxes
-      this.updateFilterHeaderStyle();
-      this.reRenderAllRows();
+      document.querySelectorAll('.filter-dropdown.active').forEach(d => {
+        d.classList.remove('active');
+      });
     });
   }
   
-  private updateKindFilterOptions(forceUpdate: boolean = false): void {
-    const optionsContainer = document.getElementById("kindFilterOptions")!;
+  private updateFilterOptions(): void {
     const allEvents = store.getAllEvents();
+    const eventCount = allEvents.length;
     
-    // Collect all unique kinds from events
-    const newKinds = new Set<number>();
-    for (const event of allEvents) {
+    // If events were cleared, reset our tracking
+    if (eventCount < this.lastEventCount) {
+      this.uniqueKinds.clear();
+      this.uniquePubkeys.clear();
+      this.uniqueRelays.clear();
+      this.lastEventCount = 0;
+    }
+    
+    // Only process new events (incremental update)
+    for (let i = this.lastEventCount; i < eventCount; i++) {
+      const event = allEvents[i];
       const type = event.frame[0];
+      // Use empty string as key for missing relay
+      this.uniqueRelays.add(event.relay || "");
       if (type === "EVENT") {
         const evt = event.frame[1]?.kind !== undefined ? event.frame[1] : event.frame[2];
-        if (evt?.kind !== undefined) {
-          newKinds.add(evt.kind);
-        }
+        if (evt?.kind !== undefined) this.uniqueKinds.add(evt.kind);
+        if (evt?.pubkey) this.uniquePubkeys.add(evt.pubkey);
       }
     }
     
-    // Update if kinds have changed OR if forced
-    const kindsChanged = newKinds.size !== this.allKinds.size || 
-                         ![...newKinds].every(k => this.allKinds.has(k));
+    this.lastEventCount = eventCount;
     
-    if (kindsChanged || forceUpdate) {
-      this.allKinds = newKinds;
-      
-      // Sort kinds
-      const sortedKinds = Array.from(this.allKinds).sort((a, b) => a - b);
-      
-      optionsContainer.innerHTML = sortedKinds.map(kind => {
-        const kindName = getKindName(kind);
-        const label = kindName ? `${kind} - ${kindName}` : String(kind);
-        const checked = this.selectedKinds === null || this.selectedKinds.has(kind);
-        
-        return `
-          <label class="filter-option">
-            <input type="checkbox" data-kind="${kind}" ${checked ? 'checked' : ''}>
-            <span>${escapeHtml(label)}</span>
-          </label>
-        `;
-      }).join('');
-      
-      // Add event listeners to checkboxes
-      optionsContainer.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
-        checkbox.addEventListener("change", (e) => {
-          const target = e.target as HTMLInputElement;
-          const kind = parseInt(target.dataset.kind!);
-          
-          // Initialize filter if not yet active
-          if (this.selectedKinds === null) {
-            // Start with all kinds selected except the one being unchecked
-            this.selectedKinds = new Set(this.allKinds);
-          }
-          
-          if (target.checked) {
-            this.selectedKinds.add(kind);
-            // If all are now selected, clear the filter (show all)
-            if (this.selectedKinds.size === this.allKinds.size) {
-              this.selectedKinds = null;
-            }
-          } else {
-            this.selectedKinds.delete(kind);
-          }
-          
-          this.updateFilterHeaderStyle();
-          this.reRenderAllRows();
-        });
-      });
-    }
-  }
-  
-  private filterKindOptions(searchTerm: string): void {
-    const optionsContainer = document.getElementById("kindFilterOptions")!;
-    const options = optionsContainer.querySelectorAll('.filter-option');
-    
-    options.forEach(option => {
-      const text = (option as HTMLElement).textContent?.toLowerCase() || '';
-      const matches = text.includes(searchTerm.toLowerCase());
-      (option as HTMLElement).style.display = matches ? 'flex' : 'none';
-    });
-  }
-  
-  private updateFilterHeaderStyle(): void {
-    // Show filter as active if it's not null (meaning a filter is applied)
-    if (this.selectedKinds !== null) {
-      this.filterHeader.classList.add("filter-active");
-    } else {
-      this.filterHeader.classList.remove("filter-active");
-    }
+    this.kindFilter.updateOptions(false, this.uniqueKinds);
+    this.pubkeyFilter.updateOptions(false, this.uniquePubkeys);
+    this.relayFilter.updateOptions(false, this.uniqueRelays);
   }
   
   private shouldShowEvent(msg: any): boolean {
@@ -252,20 +312,24 @@ class StreamUI {
       return false;
     }
     
+    // Check relay filter (applies to all message types)
+    // Use empty string for missing relay to match how we track them
+    if (!this.relayFilter.isSelected(msg.relay || "")) {
+      return false;
+    }
+    
     // If it's not an EVENT, show it (because includeWsEvents must be true at this point)
     if (type !== "EVENT") return true;
     
-    // For EVENT messages, apply kind filter
-    // If no filter is active (null), show all
-    if (this.selectedKinds === null) return true;
-    
-    // If filter is active but empty, show nothing
-    if (this.selectedKinds.size === 0) return false;
-    
-    // Check if event kind is in selected kinds
+    // For EVENT messages, apply kind and pubkey filters
     const evt = msg.frame[1]?.kind !== undefined ? msg.frame[1] : msg.frame[2];
-    if (evt?.kind !== undefined) {
-      return this.selectedKinds.has(evt.kind);
+    
+    if (evt?.kind !== undefined && !this.kindFilter.isSelected(evt.kind)) {
+      return false;
+    }
+    
+    if (evt?.pubkey && !this.pubkeyFilter.isSelected(evt.pubkey)) {
+      return false;
     }
     
     return true;
