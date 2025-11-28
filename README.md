@@ -14,12 +14,15 @@ yarn install
 yarn build
 ```
 
+**Important**: You must build the extension before loading it in the browser. The compiled JavaScript files are generated from TypeScript source files in `src/` and are not committed to git.
+
 ### Load in Browser
-1. Open your browser and go to `chrome://extensions/`
-2. Enable "Developer mode" (toggle in top-right)
-3. Click "Load unpacked"
-4. Select this project directory (not `src/`, the root)
-5. The extension should now appear in your extensions list
+1. Build the extension: `yarn build` (creates `dist/` directory)
+2. Open your browser and go to `chrome://extensions/`
+3. Enable "Developer mode" (toggle in top-right)
+4. Click "Load unpacked"
+5. Select the `dist/` directory (not the root or `src/`)
+6. The extension should now appear in your extensions list
 
 ### Open the DevTools Panel
 1. Navigate to any Nostr web app (e.g., https://jumble.social, https://treasures.to)
@@ -28,6 +31,12 @@ yarn build
 4. Click **"Start Inspecting"** to begin capturing WebSocket traffic
 
 ## Development Workflow
+
+### Source Files vs Compiled Files
+- **Source files** (`src/*.ts`, `src/*.html`) are committed to git
+- **Compiled files** are generated in `dist/` directory and ignored by git
+- Always run `yarn build` after making changes before loading/testing the extension
+- The `dist/` directory contains the built extension ready to load
 
 ### Auto-rebuild on Changes
 ```bash
@@ -46,8 +55,10 @@ After making changes, you **must** follow this "reload dance" to see updates:
 
 ### Common Development Commands
 ```bash
-yarn build       # Build once
-yarn watch       # Auto-rebuild on file changes
+yarn build       # Build once (required before loading extension)
+yarn watch       # Auto-rebuild on file changes (recommended for development)
+yarn clean       # Remove all compiled files
+yarn package     # Build and create extension.zip for Chrome Web Store
 ```
 
 ## Features

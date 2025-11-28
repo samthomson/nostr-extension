@@ -4,3 +4,5 @@ dist/
 .DS_Store
 extension.zip
 
+# Compiled files are now in dist/ and ignored
+
