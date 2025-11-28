@@ -5,6 +5,7 @@ interface NostrMessage {
   dir: "in" | "out";
   frame: any[];
   timestamp?: number;
+  relay?: string;
 }
 
 class NostrStore {

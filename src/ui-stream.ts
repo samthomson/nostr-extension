@@ -317,7 +317,7 @@ class StreamUI {
   }
   
   private renderRow(msg: any): void {
-    const { dir, frame } = msg;
+    const { dir, frame, relay } = msg;
     const type = frame[0];
     let kind: number | string = "";
     let pubkey = "";
@@ -386,6 +386,7 @@ class StreamUI {
       <td class="type">${escapeHtml(type)}</td>
       <td class="kind" title="${kindTooltip}">${escapeHtml(String(kind))}</td>
       <td class="pubkey">${pubkeyHtml}</td>
+      <td class="relay">${relay ? escapeHtml(relay) : ""}</td>
       <td class="preview ${previewClass}">
         <div class="preview-wrapper">
           <span class="preview-content">${escapeHtml(previewContent)}</span>

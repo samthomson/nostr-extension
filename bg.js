@@ -3,6 +3,8 @@
 const NOSTR_TYPES = new Set(["REQ", "EVENT", "EOSE", "NOTICE", "CLOSE", "AUTH", "COUNT", "OK"]);
 // Track debugger state per tab
 const tabs = new Map();
+// Track WebSocket connections by requestId to get relay URLs
+const websocketConnections = new Map(); // requestId -> URL
 // Handle messages (for getTabId request)
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     if (msg.type === "getTabId") {
@@ -108,14 +110,35 @@ function setupPortHandlers(port, tabId, state) {
         tabs.delete(tabId);
     });
 }
-// Listen for WebSocket frames
+// Listen for WebSocket events
 chrome.debugger.onEvent.addListener((source, method, params) => {
-    if (method !== "Network.webSocketFrameSent" && method !== "Network.webSocketFrameReceived") {
-        return;
-    }
     const state = tabs.get(source.tabId);
     if (!state || !state.attached || !state.port)
         return;
+    // Track WebSocket connections to get relay URLs
+    if (method === "Network.webSocketWillSendHandshakeRequest") {
+        const requestId = params.requestId;
+        const url = params.request?.url;
+        if (requestId && url) {
+            websocketConnections.set(requestId, url);
+            console.log('[BG] Tracked WebSocket connection:', requestId, url);
+        }
+        return;
+    }
+    // Also track when WebSocket is created (alternative event)
+    if (method === "Network.webSocketCreated") {
+        const requestId = params.requestId;
+        const url = params.url;
+        if (requestId && url) {
+            websocketConnections.set(requestId, url);
+            console.log('[BG] Tracked WebSocket created:', requestId, url);
+        }
+        return;
+    }
+    // Handle WebSocket frames
+    if (method !== "Network.webSocketFrameSent" && method !== "Network.webSocketFrameReceived") {
+        return;
+    }
     const data = params?.response?.payloadData;
     if (typeof data !== "string")
         return;
@@ -132,12 +155,39 @@ chrome.debugger.onEvent.addListener((source, method, params) => {
         return;
     }
     const direction = method.endsWith("Sent") ? "out" : "in";
+    // Get relay URL from requestId - check multiple possible locations
+    const requestId = params.requestId || params.request?.requestId;
+    // Debug logging
+    if (!requestId) {
+        console.log('[BG] No requestId in params:', method, params);
+    }
+    const relayUrl = requestId ? websocketConnections.get(requestId) : null;
+    if (!relayUrl) {
+        if (requestId) {
+            console.log('[BG] No relay URL found for requestId:', requestId, 'Available connections:', Array.from(websocketConnections.keys()));
+        }
+        else {
+            console.log('[BG] No requestId available, params keys:', Object.keys(params || {}));
+        }
+    }
+    // Extract just the hostname for display
+    let relay = "";
+    if (relayUrl) {
+        try {
+            const url = new URL(relayUrl);
+            relay = url.hostname;
+        }
+        catch {
+            relay = relayUrl;
+        }
+    }
     // Send to devtools panel
     state.port.postMessage({
         type: "nostr",
         dir: direction,
         frame: frame,
-        timestamp: params.timestamp
+        timestamp: params.timestamp,
+        relay: relay
     });
 });
 // Handle debugger detach events
