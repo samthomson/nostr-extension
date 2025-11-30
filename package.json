@@ -1,6 +1,6 @@
 {
   "name": "nostr-ws-inspector",
-  "version": "1.10.1",
+  "version": "1.10.2",
   "description": "Browser extension to inspect Nostr WebSocket traffic",
   "scripts": {
     "build": "tsc && cp src/devtools.html dist/ && cp src/panel.html dist/ && cp manifest.json dist/ && cp privacy-policy.md dist/",
